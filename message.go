@@ -5,15 +5,12 @@ import	(
 )
 
 
-
-
 type work_writer func([]byte) (int, error)
 
 
 func (f work_writer) Write(p []byte) (int, error) {
 	return f(p)
 }
-
 
 
 type message struct {
@@ -28,7 +25,7 @@ func (msg message) pkt_reply( pkt Packet ) {
 }
 
 
-func (msg message) reply( c command, d ...[]byte ) {
+func (msg message) reply( c Command, d ...[]byte ) {
 	msg.pool.send_to(msg.server, res_packet(c, append([][]byte{ msg.pkt.At(0) }, d...)... ))
 }
 

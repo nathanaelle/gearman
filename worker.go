@@ -15,7 +15,7 @@ type	Worker	struct {
 
 // create a new Worker
 // r_end is a channel to signal to the Worker to end the process
-func NewWorker(r_end <-chan bool, debug *log.Logger)*Worker{
+func NewWorker(r_end <-chan struct{}, debug *log.Logger)*Worker{
 	q		:= make(chan message,10)
 	w		:= new(Worker)
 	w.m_queue	= q
@@ -87,49 +87,55 @@ func (w *Worker)run(msg message) {
 	res	:= new(bytes.Buffer)
 
 	status, err := isolated_Serve( w.get_handler(name), bytes.NewReader(msg.pkt.At(2)), res, msg.work_data() )
-	switch {
+	switch	{
 	case	err == nil && status:
-		msg.reply(WORK_COMPLETE, res.Bytes() )
+		msg.reply(WORK_COMPLETE, res.Bytes())
 
 	case	err == nil && !status:
 		msg.reply(WORK_FAIL)
 
 	case	err != nil:
-		msg.reply(WORK_EXCEPTION, []byte(err.Error()) )
+		msg.reply(WORK_EXCEPTION, []byte(err.Error()))
 	}
 }
 
 
 func (w *Worker)loop(dbg *log.Logger) {
-	for {
-		select {
+	for	{
+		select	{
 		case	msg := <- w.m_queue:
-			debug(dbg, "\t%s\n", msg.pkt)
-			switch msg.pkt.Cmd() {
-			case	NOOP:
-				msg.pkt_reply(grab_job)
-
+			switch	msg.pkt.Cmd() {
 			case	NO_JOB:
-				msg.pkt_reply(pre_sleep)
+				msg.server.CounterAdd(-1)
 
-			case	JOB_ASSIGN:
-				go w.run(msg)
+			case	NOOP:
+				msg.server.CounterAdd(2)
 				msg.pkt_reply(grab_job)
+				msg.pkt_reply(grab_job_uniq)
+				continue
 
 			case	ECHO_RES:
-				debug(dbg, "EKO\t[%s]\n",string(msg.pkt.At(0)))
-				msg.pkt_reply(grab_job)
+				debug(dbg, "WRKR\tECHO\t[%v]\n", msg.pkt.At(0))
+
+			case	JOB_ASSIGN:
+				msg.server.CounterAdd(-1)
+				go w.run(msg)
+
+			case	JOB_ASSIGN_UNIQ:
+				msg.server.CounterAdd(-1)
+				go w.run(msg)
 
 			case	ERROR:
-				debug(dbg, "ERR\t[%s] [%s]\n",msg.pkt.At(0),string(msg.pkt.At(1)))
-				msg.pkt_reply(grab_job)
-
+				debug(dbg, "WRKR\tERR\t[%s] [%s]\n", msg.pkt.At(0), string(msg.pkt.At(1)))
 			default:
-				debug(dbg, "!!\tCMD=[%d]\n",msg.pkt.Cmd())
-				msg.pkt_reply(grab_job)
+				debug(dbg, "WRKR\t%s\n", msg.pkt)
 			}
 
-		case <- w.r_end:
+			if msg.server.IsZeroCounter() {
+				msg.pkt_reply(pre_sleep)
+			}
+
+		case	<- w.r_end:
 			return
 		}
 	}

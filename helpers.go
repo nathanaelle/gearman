@@ -46,50 +46,28 @@ func rand_id() (string,error) {
 
 func ReadPacket(c io.Reader) (Packet,error) {
 	var	header	[12]byte
+	var	payload	[]byte
 
 	if _, err := c.Read(header[:]); err != nil {
 		return nil,err
 	}
-	hello	:= be2uint32(header[0:4])
-	cmd	:= command(be2uint32(header[4:8]))
+	h	:= Hello(be2uint32(header[0:4]))
+	cmd	:= Command(be2uint32(header[4:8]))
 	size	:= be2uint32(header[8:12])
 
-	switch cmd {
-	case	PRE_SLEEP, NOOP, GRAB_JOB, RESET_ABILITIES, GRAB_JOB_UNIQ, ALL_YOURS, NO_JOB:
-		if size != 0 {
-			return	nil, PayloadInEmptyPacketError
-		}
-		return	&pkt0size{ hello, cmd },nil
-
-	case	ECHO_RES, ECHO_REQ, GET_STATUS, JOB_CREATED, CAN_DO, CANT_DO, WORK_FAIL, SET_CLIENT_ID:
-		p	:= &pkt1len{ hello, cmd, size, make([]byte, size) }
-		size	:= uint32(0)
-		for size < p.size {
-			t_s, err := c.Read(p.raw[size:])
+	if size > 0 {
+		t_size	:= uint32(0)
+		payload	=  make([]byte, size)
+		for t_size < size {
+			t_s, err := c.Read(payload[t_size:])
 			if err != nil {
 				return nil,err
 			}
-			size += uint32(t_s)
+			t_size += uint32(t_s)
 		}
-		return	p,nil
-
-	default:
-		p	:= &pktcommon{ pkt1len{ hello, cmd, size, make([]byte, size) }, []int{} }
-		size	:= uint32(0)
-
-		for size < p.size {
-			t_s, err := c.Read(p.raw[size:])
-			if err != nil {
-				return nil,err
-			}
-			size += uint32(t_s)
-		}
-
-		p.index()
-
-		return	p,nil
 	}
 
+	return	cmd.Unmarshal(h, payload)
 }
 
 

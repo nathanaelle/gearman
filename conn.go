@@ -6,41 +6,43 @@ import	(
 	"net"
 	"time"
 	"sync"
+	"sync/atomic"
 )
 
 
 type	(
-
 	Conn	interface {
 		io.Writer
 		io.Reader
 		SetReadDeadline(time.Time)
 		Redial()
 		String() string
+		CounterAdd(int32)
+		IsZeroCounter() bool
 	}
 
-
 	netConn	struct {
+		counter		*int32
 		network,address string
-		conn	net.Conn
+		conn		net.Conn
 	}
 
 	testConn	struct {
 		sync.Mutex
-		r	[]byte
-		w	[]byte
-		r_ready	chan struct{}
-		w_ready	chan struct{}
+		counter		*int32
+		r		[]byte
+		w		[]byte
+		r_ready		chan []byte
+		w_ready		chan []byte
 	}
 )
 
 
-
-
 func NetConn(network,address string) Conn {
  	return	&netConn{
-		network: network,
-		address: address,
+		counter:	new(int32),
+		network:	network,
+		address:	address,
 	}
 }
 
@@ -71,15 +73,36 @@ func (nc *netConn)Write(b []byte) (int, error) {
 	return	nc.conn.Write(b)
 }
 
+func (nc *netConn)CounterAdd(d int32) {
+	atomic.AddInt32(nc.counter, d)
+}
+
+func (nc *netConn)IsZeroCounter() bool {
+	return	atomic.LoadInt32(nc.counter) == 0
+}
+
+
+
 
 
 func TestConn() *testConn {
 	return	&testConn {
-		r_ready:	make(chan struct{},100),
-		w_ready:	make(chan struct{},100),
+		counter:	new(int32),
+		r_ready:	make(chan []byte,10),
+		w_ready:	make(chan []byte,10),
 	}
 
 }
+
+
+func (nc *testConn)CounterAdd(d int32) {
+	atomic.AddInt32(nc.counter, d)
+}
+
+func (nc *testConn)IsZeroCounter() bool {
+	return	atomic.LoadInt32(nc.counter) == 0
+}
+
 
 func (nc *testConn)String() string {
 	return	"test conn"
@@ -90,14 +113,16 @@ func (nc *testConn)Redial() {
 
 
 func (nc *testConn)Read(b []byte) (int, error) {
-	<-nc.r_ready
 	nc.Lock()
 	defer nc.Unlock()
+
+	if len(nc.r) == 0 {
+		nc.r = <-nc.r_ready
+	}
 
 	if len(b) < len(nc.r) {
 		copy(b, nc.r[0:len(b)])
 		nc.r = nc.r[len(b):]
-		nc.r_ready <- struct{}{}
 		return len(b), nil
 	}
 
@@ -114,30 +139,15 @@ func (nc *testConn)SetReadDeadline(_ time.Time) {
 
 
 func (nc *testConn)Write(b []byte) (int,error) {
-	nc.Lock()
-	defer nc.Unlock()
-
-	nc.w = append(nc.w, b...)
-	nc.w_ready <- struct{}{}
+	nc.w_ready <- b
 	return len(b),nil
 }
 
 func (nc *testConn)Received() (b []byte) {
-	<-nc.w_ready
-	nc.Lock()
-	defer nc.Unlock()
-
-	b = nc.w
-	nc.w = nc.w[0:0]
-
-	return
+	return <- nc.w_ready
 }
 
 
 func (nc *testConn)Send(b []byte) {
-	nc.Lock()
-	defer nc.Unlock()
-
-	nc.r = append(nc.r, b...)
-	nc.r_ready <- struct{}{}
+	nc.r_ready <- b
 }

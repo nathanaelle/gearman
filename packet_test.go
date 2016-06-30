@@ -48,7 +48,13 @@ var	valid_packet []packet_test = []packet_test {
 		1,
 	},
 	{
-		[]byte{0, 0x52, 0x45, 0x53, 0, 0, 0, 0x03, 0, 0, 0, 0x0d, 'i','n','t','e','r','n','a','l',0,'e','c','h','o'},
+		[]byte{0, 0x52, 0x45, 0x51, 0, 0, 0, 0x11, 0, 0, 0, 0x0d, 'i','n','t','e','r','n','a','l',0,'e','c','h','o'},
+		nil,
+		&RESQRequiredError{ECHO_RES,REQ,RES},
+		0,
+	},
+	{
+		[]byte{0, 0x52, 0x45, 0x51, 0, 0, 0, 0x03, 0, 0, 0, 0x0d, 'i','n','t','e','r','n','a','l',0,'e','c','h','o'},
 		nil,
 		PayloadInEmptyPacketError,
 		0,
@@ -69,12 +75,13 @@ var	valid_packet []packet_test = []packet_test {
 
 
 func Test_Packet(t *testing.T) {
-	for _, vp := range valid_packet {
+	for Ti, vp := range valid_packet {
 	 	out	:= new(bytes.Buffer)
 		p,err	:= ReadPacket( bytes.NewBuffer(vp.data))
-		if err != vp.err {
-			t.Logf("[%x] %+v [%x]", vp.data, vp.packet, out.Bytes())
-			t.Errorf("go error %+v expected %+v", err, vp.err)
+
+		if !valid_err(t, err, vp.err) {
+			t.Logf("T_%d\t[%x] %+v", Ti, vp.data, vp.packet)
+			continue
 		}
 
 		if vp.err != nil {
@@ -82,20 +89,19 @@ func Test_Packet(t *testing.T) {
 		}
 
 		if err	:= WritePacket(out, p); err != nil {
-			t.Logf("[%x] %+v [%x]", vp.data, vp.packet, out.Bytes())
-			t.Errorf("%+v", err)
+			t.Logf("T_%d\t[%x] %+v [%x]", Ti, vp.data, vp.packet, out.Bytes())
+			t.Errorf("T_%d\t%+v", Ti, err)
 			continue
 		}
 
 		if !bytes.Equal(vp.data, out.Bytes()) {
-			t.Logf("[%x] %+v [%x]", vp.data, vp.packet, out.Bytes())
-			t.Errorf("[%x] [%x] differs", vp.data, out.Bytes())
+			t.Logf("T_%d\t[%x] %+v [%x]", Ti, vp.data, vp.packet, out.Bytes())
+			t.Errorf("T_%d\t[%x] [%x] differs", Ti, vp.data, out.Bytes())
 			continue
 		}
 
 		if p.Len() != vp.pl_size {
-			t.Logf("[%x] %+v [%x]", vp.data, vp.packet, out.Bytes())
-			t.Errorf("[%d] [%d] payload differs", p.Len(), vp.pl_size)
+			t.Errorf("T_%d\tgot [%d] expected [%d]", Ti, p.Len(), vp.pl_size)
 			continue
 		}
 	}

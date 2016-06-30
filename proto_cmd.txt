@@ -1,0 +1,36 @@
+CAN_DO			//  1	REQ    Worker	PAYLOAD	1
+CANT_DO			//  2	REQ    Worker	PAYLOAD	1
+RESET_ABILITIES		//  3	REQ    Worker
+PRE_SLEEP		//  4	REQ    Worker
+_			//  5	-	-
+NOOP			//  6	RES    Worker
+SUBMIT_JOB		//  7	REQ    Client		PAYLOAD	3
+JOB_CREATED		//  8	RES    Client		PAYLOAD	1
+GRAB_JOB		//  9	REQ    Worker
+NO_JOB			// 10	RES    Worker
+JOB_ASSIGN		// 11	RES    Worker		PAYLOAD	3
+WORK_STATUS		// 12	REQ    Worker		RES    Client		PAYLOAD	3
+WORK_COMPLETE		// 13	REQ    Worker		RES    Client		PAYLOAD	2
+WORK_FAIL		// 14	REQ    Worker		RES    Client		PAYLOAD	1
+GET_STATUS		// 15	REQ    Client		PAYLOAD	1
+ECHO_REQ		// 16	REQ    Client/Worker	PAYLOAD	1
+ECHO_RES		// 17	RES    Client/Worker	PAYLOAD	1
+SUBMIT_JOB_BG		// 18	REQ    Client		PAYLOAD	3
+ERROR			// 19	RES    Client/Worker	PAYLOAD	2
+STATUS_RES		// 20	RES    Client		PAYLOAD	5
+SUBMIT_JOB_HIGH		// 21	REQ    Client		PAYLOAD	3
+SET_CLIENT_ID		// 22	REQ    Worker		PAYLOAD	1
+CAN_DO_TIMEOUT		// 23	REQ    Worker		PAYLOAD	2
+ALL_YOURS		// 24	REQ    Worker
+WORK_EXCEPTION		// 25	REQ    Worker		RES    Client		PAYLOAD	2
+OPTION_REQ		// 26	REQ    Client/Worker		PAYLOAD	1
+OPTION_RES		// 27	RES    Client/Worker		PAYLOAD	1
+WORK_DATA		// 28	REQ    Worker		RES    Client		PAYLOAD	2
+WORK_WARNING		// 29	REQ    Worker		RES    Client		PAYLOAD	2
+GRAB_JOB_UNIQ		// 30	REQ    Worker
+JOB_ASSIGN_UNIQ		// 31	RES    Worker		PAYLOAD	4
+SUBMIT_JOB_HIGH_BG	// 32	REQ    Client		PAYLOAD	3
+SUBMIT_JOB_LOW		// 33	REQ    Client		PAYLOAD	3
+SUBMIT_JOB_LOW_BG	// 34	REQ    Client		PAYLOAD	3
+SUBMIT_JOB_SCHED	// 35	REQ    Client		PAYLOAD	8
+SUBMIT_JOB_EPOCH	// 36	REQ    Client		PAYLOAD	4
