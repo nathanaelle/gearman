@@ -199,7 +199,6 @@ func (pl pkt1len)Encode(buff []byte) (int,error) {
 
 //	generic packet with arbitrary payload
 func newPktnlen(cmd Command, hello, expected_hello Hello, payload []byte) (Packet,error) {
-
 	expected_len, ok := lenCommand[cmd]
 	if !ok {
 		return	&pkt0size{ hello, cmd },nil
