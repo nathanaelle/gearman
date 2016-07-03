@@ -62,9 +62,11 @@ func valid_result(t *testing.T, expected_res []byte, expected_err error) (func([
 
 
 func Test_Client_simple(t *testing.T) {
-	srv	:= TestConn()
-	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
 	end	:= make(chan struct{})
+	defer	close(end)
+
+	srv	:= ConnTest()
+	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
 	cli	:= SingleServerClient(end, nil ) //logger)
 
 	cli.AddServers( srv )
@@ -77,23 +79,18 @@ func Test_Client_simple(t *testing.T) {
 	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:1")).Marshal())
 	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset")).Marshal())
 
-	val,err	:= r.Value()
-
-	if err != nil {
-		t.Errorf("got error %v", err)
-		return
-	}
-
-	if !valid_step(t, val, []byte("tset")) {
+	if !valid_result(t, []byte("tset"), nil)(r.Value()) {
 		return
 	}
 }
 
 
 func Test_Client_unordered_result(t *testing.T) {
-	srv	:= TestConn()
-	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
 	end	:= make(chan struct{})
+	defer	close(end)
+
+	srv	:= ConnTest()
+	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
 	cli	:= SingleServerClient(end, nil ) //logger)
 
 	cli.AddServers( srv )
@@ -116,7 +113,6 @@ func Test_Client_unordered_result(t *testing.T) {
 	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:2")).Marshal())
 	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:3")).Marshal())
 
-
 	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:2"), []byte("2 tset")).Marshal())
 	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:3"), []byte("3 tset")).Marshal())
 	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1 tset")).Marshal())
@@ -132,6 +128,4 @@ func Test_Client_unordered_result(t *testing.T) {
 	if !valid_result(t, []byte("1 tset"), nil)(r1.Value()) {
 		return
 	}
-
-	close(end)
 }
