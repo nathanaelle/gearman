@@ -3,6 +3,7 @@ package	gearman
 import	(
 	"io"
 	"log"
+	"net"
 	"crypto/rand"
 	"encoding/base64"
 )
@@ -40,6 +41,20 @@ func rand_id() (string,error) {
 	}
 
 	return base64.RawURLEncoding.EncodeToString(raw[:]), nil
+}
+
+
+
+func is_eof(err error) bool {
+	return err == io.EOF
+}
+
+func is_timeout(err error) bool {
+	switch	t_err := err.(type) {
+	case net.Error:
+		return	t_err.Timeout() && t_err.Temporary()
+	}
+	return false
 }
 
 

@@ -2,8 +2,6 @@ package gearman
 
 import (
 	"io"
-	_ "os"
-	_ "log"
 	"net"
 	"testing"
 )
@@ -159,6 +157,8 @@ func Test_Worker_netcon(t *testing.T) {
 				var pkt Packet
 				var err error
 
+				defer c.Close()
+
 				if pkt,err = ReadPacket(c); err != nil {
 					t.Errorf("got error %+v", err )
 					return
@@ -211,6 +211,7 @@ func Test_Worker_netcon(t *testing.T) {
 				if !valid_step(t, pkt.Marshal(), res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset") ).Marshal()) {
 					return
 				}
+
 			}(conn)
 		}
 	}

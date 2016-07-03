@@ -52,6 +52,7 @@ func (nc *netConn)Redial() {
 
 	nc.conn,err = net.Dial(nc.network, nc.address)
 	for err != nil {
+		fmt.Printf("!>	%v",err)
 		time.Sleep(100*time.Millisecond)
 		nc.conn,err = net.Dial(nc.network, nc.address)
 	}
@@ -59,31 +60,19 @@ func (nc *netConn)Redial() {
 
 
 func (nc *netConn)Read(b []byte) (int, error) {
-	if nc.conn == nil {
-		nc.Redial()
-	}
 	return	nc.conn.Read(b)
 }
 
 func (nc *netConn)SetReadDeadline(t time.Time) {
-	if nc.conn == nil {
-		nc.Redial()
-	}
 	nc.conn.SetReadDeadline(t)
 }
 
 func (nc *netConn)SetWriteDeadline(t time.Time) {
-	if nc.conn == nil {
-		nc.Redial()
-	}
 	nc.conn.SetWriteDeadline(t)
 }
 
 
 func (nc *netConn)Write(b []byte) (int, error) {
-	if nc.conn == nil {
-		nc.Redial()
-	}
 	return	nc.conn.Write(b)
 }
 
