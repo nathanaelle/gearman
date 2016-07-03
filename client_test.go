@@ -1,8 +1,7 @@
 package gearman
 
 import (
-	_ "os"
-	_ "log"
+	"net"
 	"bytes"
 	"testing"
 )
@@ -56,6 +55,17 @@ func valid_result(t *testing.T, expected_res []byte, expected_err error) (func([
 	return func(res []byte, err error) bool {
 		return valid_err(t, err, expected_err) && valid_step(t, res, expected_res);
 	}
+}
+
+
+func packet_received_is(t *testing.T, c net.Conn, expected_pkt Packet) bool {
+	pkt,err	:= ReadPacket(c)
+	if err != nil {
+		t.Errorf("got error %+v", err )
+		return	false
+	}
+
+	return	valid_step(t, pkt.Marshal(), expected_pkt.Marshal())
 }
 
 

@@ -154,61 +154,35 @@ func Test_Worker_netcon(t *testing.T) {
 			}
 
 			go func(c net.Conn) {
-				var pkt Packet
-				var err error
-
 				defer c.Close()
 
-				if pkt,err = ReadPacket(c); err != nil {
-					t.Errorf("got error %+v", err )
-					return
-				}
-				if !valid_step(t, pkt.Marshal(), can_do("reverse").Marshal()) {
+
+				if !packet_received_is(t, c, can_do("reverse") ) {
 					return
 				}
 
-				if pkt,err = ReadPacket(c); err != nil {
-					t.Errorf("got error %+v", err )
-					return
-				}
-				if !valid_step(t, pkt.Marshal(), pre_sleep.Marshal()) {
+				if !packet_received_is(t, c, pre_sleep ) {
 					return
 				}
 
 				WritePacket(c, noop)
 
-				if pkt,err = ReadPacket(c); err != nil {
-					t.Errorf("got error %+v", err )
-					return
-				}
-				if !valid_step(t, pkt.Marshal(), grab_job.Marshal()) {
+				if !packet_received_is(t, c, grab_job ) {
 					return
 				}
 
-				if pkt,err = ReadPacket(c); err != nil {
-					t.Errorf("got error %+v", err )
-					return
-				}
-				if !valid_step(t, pkt.Marshal(), grab_job_uniq.Marshal()) {
+				if !packet_received_is(t, c, grab_job_uniq ) {
 					return
 				}
 
 				WritePacket(c, no_job)
 				WritePacket(c, res_packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test") ))
 
-				if pkt,err = ReadPacket(c); err != nil {
-					t.Errorf("got error %+v", err )
-					return
-				}
-				if !valid_step(t, pkt.Marshal(), pre_sleep.Marshal()) {
+				if !packet_received_is(t, c, pre_sleep) {
 					return
 				}
 
-				if pkt,err = ReadPacket(c); err != nil {
-					t.Errorf("got error %+v", err )
-					return
-				}
-				if !valid_step(t, pkt.Marshal(), res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset") ).Marshal()) {
+				if !packet_received_is(t, c, res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset") ) ) {
 					return
 				}
 
