@@ -10,15 +10,9 @@ import (
 
 
 
-
-func Test_Worker_simple(t *testing.T) {
-	end	:= make(chan struct{})
-	defer	close(end)
-
-	srv	:= ConnTest()
+func trivialWorker(t *testing.T,end chan struct{}, srv ...Conn)  {
 	w	:= NewWorker(end, nil)
-
-	w.AddServers( srv )
+	w.AddServers( srv... )
 	w.AddHandler("reverse", JobHandler(func(payload io.Reader,reply io.Writer) (error){
 		buff	:= make([]byte,1<<16)
 		s,_	:= payload.Read(buff)
@@ -30,6 +24,19 @@ func Test_Worker_simple(t *testing.T) {
 
 		return nil
 	} ))
+
+	<-end
+}
+
+
+
+
+func Test_Worker_simple(t *testing.T) {
+	end	:= make(chan struct{})
+	defer	close(end)
+
+	srv	:= ConnTest()
+	go trivialWorker(t,end, srv)
 
 	if !valid_step(t, srv.Received(), can_do("reverse").Marshal()) {
 		return
@@ -65,20 +72,7 @@ func Test_Worker_two_servers(t *testing.T) {
 
 	srv1	:= ConnTest()
 	srv2	:= ConnTest()
-	w	:= NewWorker(end, nil)
-
-	w.AddServers( srv1, srv2 )
-	w.AddHandler("reverse", JobHandler(func(payload io.Reader,reply io.Writer) (error){
-		buff	:= make([]byte,1<<16)
-		s,_	:= payload.Read(buff)
-		buff	= buff[0:s]
-
-		for i:=len(buff); i>0; i-- {
-			reply.Write([]byte{ buff[i-1] })
-		}
-
-		return nil
-	} ))
+	go trivialWorker(t,end, srv1, srv2)
 
 	for _,srv := range []*testConn{ srv1, srv2 } {
 		if !valid_step(t, srv.Received(), can_do("reverse").Marshal()) {
@@ -128,27 +122,6 @@ func Test_Worker_two_servers(t *testing.T) {
 	if !valid_any_step(t, rec, pre_sleep.Marshal(), res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("2vrs tset") ).Marshal()) {
 		return
 	}
-}
-
-
-
-
-func trivialWorker(t *testing.T,end chan struct{}, srv Conn)  {
-	w	:= NewWorker(end, nil)
-	w.AddServers( srv )
-	w.AddHandler("reverse", JobHandler(func(payload io.Reader,reply io.Writer) (error){
-		buff	:= make([]byte,1<<16)
-		s,_	:= payload.Read(buff)
-		buff	= buff[0:s]
-
-		for i:=len(buff); i>0; i-- {
-			reply.Write([]byte{ buff[i-1] })
-		}
-
-		return nil
-	} ))
-
-	<-end
 }
 
 

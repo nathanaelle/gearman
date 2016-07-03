@@ -4,6 +4,28 @@
 
 ## Examples
 
+### Worker Example
+
+```
+end     := make(chan struct{})
+w	:= NewWorker(end, nil)
+w.AddServers( gearman.NetConn("tcp","serveur:1234") )
+w.AddHandler("reverse", JobHandler(func(payload io.Reader,reply io.Writer) (error){
+        buff	:= make([]byte,1<<16)
+        s,_	:= payload.Read(buff)
+        buff	= buff[0:s]
+
+        for i:=len(buff); i>0; i-- {
+                reply.Write([]byte{ buff[i-1] })
+        }
+
+        return nil
+} ))
+
+<-end
+```
+
+
 ## Features
 
   * [x] Worker Support
