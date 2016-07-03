@@ -8,9 +8,9 @@
 
 ```
 end     := make(chan struct{})
-w	:= NewWorker(end, nil)
+w	:= gearman.NewWorker(end, nil)
 w.AddServers( gearman.NetConn("tcp","serveur:1234") )
-w.AddHandler("reverse", JobHandler(func(payload io.Reader,reply io.Writer) (error){
+w.AddHandler("reverse", gearman.JobHandler(func(payload io.Reader,reply io.Writer) (error){
         buff	:= make([]byte,1<<16)
         s,_	:= payload.Read(buff)
         buff	= buff[0:s]
