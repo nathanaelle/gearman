@@ -58,7 +58,7 @@ func Test_Worker_simple(t *testing.T) {
 	if !valid_step(t, srv.Received(), pre_sleep.Marshal()) {
 		return
 	}
-	if !valid_step(t, srv.Received(), res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset") ).Marshal()) {
+	if !valid_step(t, srv.Received(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset") ).Marshal()) {
 		return
 	}
 }
@@ -102,22 +102,22 @@ func Test_Worker_two_servers(t *testing.T) {
 	srv2.Send(res_packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test srv2") ).Marshal())
 
 	rec := srv1.Received()
-	if !valid_any_step(t, rec, pre_sleep.Marshal(), res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1vrs tset") ).Marshal()) {
+	if !valid_any_step(t, rec, pre_sleep.Marshal(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1vrs tset") ).Marshal()) {
 		return
 	}
 
 	rec = srv1.Received()
-	if !valid_any_step(t, rec, pre_sleep.Marshal(), res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1vrs tset") ).Marshal()) {
+	if !valid_any_step(t, rec, pre_sleep.Marshal(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1vrs tset") ).Marshal()) {
 		return
 	}
 
 	rec = srv2.Received()
-	if !valid_any_step(t, rec, pre_sleep.Marshal(), res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("2vrs tset") ).Marshal()) {
+	if !valid_any_step(t, rec, pre_sleep.Marshal(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("2vrs tset") ).Marshal()) {
 		return
 	}
 
 	rec = srv2.Received()
-	if !valid_any_step(t, rec, pre_sleep.Marshal(), res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("2vrs tset") ).Marshal()) {
+	if !valid_any_step(t, rec, pre_sleep.Marshal(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("2vrs tset") ).Marshal()) {
 		return
 	}
 }
@@ -182,7 +182,7 @@ func Test_Worker_netcon(t *testing.T) {
 					return
 				}
 
-				if !packet_received_is(t, c, res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset") ) ) {
+				if !packet_received_is(t, c, req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset") ) ) {
 					return
 				}
 

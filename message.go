@@ -26,7 +26,7 @@ func (msg message) pkt_reply( pkt Packet ) {
 
 
 func (msg message) reply( c Command, d ...[]byte ) {
-	msg.pool.send_to(msg.server, res_packet(c, append([][]byte{ msg.pkt.At(0) }, d...)... ))
+	msg.pool.send_to(msg.server, req_packet(c, append([][]byte{ msg.pkt.At(0) }, d...)... ))
 }
 
 
