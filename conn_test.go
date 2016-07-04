@@ -1,60 +1,53 @@
-package	gearman
+package gearman
 
-import	(
+import (
 	"net"
 	"sync"
-	"time"
 	"sync/atomic"
+	"time"
 )
 
-
-type	(
-
-
-
-	testConn	struct {
+type (
+	testConn struct {
 		sync.Mutex
-		counter		*int32
-		r		[]byte
-		w		[]byte
-		r_ready		chan []byte
-		w_ready		chan []byte
+		counter *int32
+		r       []byte
+		w       []byte
+		r_ready chan []byte
+		w_ready chan []byte
 	}
 
-	testNetConn	struct {
+	testNetConn struct {
 		net.Conn
-		counter		*int32
+		counter *int32
 	}
 )
 
 func ConnTest() *testConn {
-	return	&testConn {
-		counter:	new(int32),
-		r_ready:	make(chan []byte,10),
-		w_ready:	make(chan []byte,10),
+	return &testConn{
+		counter: new(int32),
+		r_ready: make(chan []byte, 10),
+		w_ready: make(chan []byte, 10),
 	}
 
 }
 
-
-func (nc *testConn)CounterAdd(d int32) {
+func (nc *testConn) CounterAdd(d int32) {
 	atomic.AddInt32(nc.counter, d)
 }
 
-func (nc *testConn)IsZeroCounter() bool {
-	return	atomic.LoadInt32(nc.counter) == 0
+func (nc *testConn) IsZeroCounter() bool {
+	return atomic.LoadInt32(nc.counter) == 0
 }
 
-
-func (nc *testConn)String() string {
-	return	"test conn"
+func (nc *testConn) String() string {
+	return "test conn"
 }
 
-func (nc *testConn)Redial() {
+func (nc *testConn) Redial() {
 }
 
-
-func (nc *testConn)Read(b []byte) (int, error) {
+func (nc *testConn) Read(b []byte) (int, error) {
 	nc.Lock()
 	defer nc.Unlock()
 
@@ -76,51 +69,44 @@ func (nc *testConn)Read(b []byte) (int, error) {
 
 }
 
-func (nc *testConn)SetReadDeadline(_ time.Time) {
+func (nc *testConn) SetReadDeadline(_ time.Time) {
 }
 
-func (nc *testConn)SetWriteDeadline(_ time.Time) {
+func (nc *testConn) SetWriteDeadline(_ time.Time) {
 }
 
-
-func (nc *testConn)Write(b []byte) (int,error) {
+func (nc *testConn) Write(b []byte) (int, error) {
 	nc.w_ready <- b
-	return len(b),nil
+	return len(b), nil
 }
 
-func (nc *testConn)Received() (b []byte) {
-	return <- nc.w_ready
+func (nc *testConn) Received() (b []byte) {
+	return <-nc.w_ready
 }
 
-
-func (nc *testConn)Send(b Packet) {
+func (nc *testConn) Send(b Packet) {
 	nc.r_ready <- b.Marshal()
 }
 
-func (nc *testConn)SendByte(b []byte) {
+func (nc *testConn) SendByte(b []byte) {
 	nc.r_ready <- b
 }
 
-
-
 func NetConnTest(c net.Conn) *testNetConn {
-	return	&testNetConn { c, new(int32) }
+	return &testNetConn{c, new(int32)}
 }
 
-
-
-func (nc *testNetConn)CounterAdd(d int32) {
+func (nc *testNetConn) CounterAdd(d int32) {
 	atomic.AddInt32(nc.counter, d)
 }
 
-func (nc *testNetConn)IsZeroCounter() bool {
-	return	atomic.LoadInt32(nc.counter) == 0
+func (nc *testNetConn) IsZeroCounter() bool {
+	return atomic.LoadInt32(nc.counter) == 0
 }
 
-
-func (nc *testNetConn)String() string {
-	return	"testNetConn"
+func (nc *testNetConn) String() string {
+	return "testNetConn"
 }
 
-func (nc *testNetConn)Redial() {
+func (nc *testNetConn) Redial() {
 }
