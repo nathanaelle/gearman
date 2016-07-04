@@ -27,8 +27,6 @@ func trivialWorker(t *testing.T,end chan struct{}, srv ...Conn)  {
 }
 
 
-
-
 func Test_Worker_simple(t *testing.T) {
 	end	:= make(chan struct{})
 	defer	close(end)
@@ -36,29 +34,29 @@ func Test_Worker_simple(t *testing.T) {
 	srv	:= ConnTest()
 	go trivialWorker(t,end, srv)
 
-	if !valid_step(t, srv.Received(), can_do("reverse").Marshal()) {
+	if !valid_step(t, srv.Received(), can_do("reverse")) {
 		return
 	}
 
-	if !valid_step(t, srv.Received(), pre_sleep.Marshal()) {
+	if !valid_step(t, srv.Received(), pre_sleep) {
 		return
 	}
 
-	srv.Send(noop.Marshal())
-	if !valid_step(t, srv.Received(), grab_job.Marshal()) {
+	srv.Send(noop)
+	if !valid_step(t, srv.Received(), grab_job) {
 		return
 	}
 
-	if !valid_step(t, srv.Received(), grab_job_uniq.Marshal()) {
+	if !valid_step(t, srv.Received(), grab_job_uniq) {
 		return
 	}
 
-	srv.Send(no_job.Marshal())
-	srv.Send(res_packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test") ).Marshal())
-	if !valid_step(t, srv.Received(), pre_sleep.Marshal()) {
+	srv.Send(no_job)
+	srv.Send(res_packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test") ))
+	if !valid_step(t, srv.Received(), pre_sleep) {
 		return
 	}
-	if !valid_step(t, srv.Received(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset") ).Marshal()) {
+	if !valid_step(t, srv.Received(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset") )) {
 		return
 	}
 }
@@ -73,51 +71,51 @@ func Test_Worker_two_servers(t *testing.T) {
 	go trivialWorker(t,end, srv1, srv2)
 
 	for _,srv := range []*testConn{ srv1, srv2 } {
-		if !valid_step(t, srv.Received(), can_do("reverse").Marshal()) {
+		if !valid_step(t, srv.Received(), can_do("reverse")) {
 			return
 		}
 
-		if !valid_step(t, srv.Received(), pre_sleep.Marshal()) {
+		if !valid_step(t, srv.Received(), pre_sleep) {
 			return
 		}
 
 	}
 
-	srv2.Send(noop.Marshal())
-	srv1.Send(noop.Marshal())
+	srv2.Send(noop)
+	srv1.Send(noop)
 
 	for _,srv := range []*testConn{ srv1, srv2 } {
-		if !valid_step(t, srv.Received(), grab_job.Marshal()) {
+		if !valid_step(t, srv.Received(), grab_job) {
 			return
 		}
-		if !valid_step(t, srv.Received(), grab_job_uniq.Marshal()) {
+		if !valid_step(t, srv.Received(), grab_job_uniq) {
 			return
 		}
 	}
 
-	srv1.Send(no_job.Marshal())
-	srv2.Send(no_job.Marshal())
+	srv1.Send(no_job)
+	srv2.Send(no_job)
 
-	srv1.Send(res_packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test srv1") ).Marshal())
-	srv2.Send(res_packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test srv2") ).Marshal())
+	srv1.Send(res_packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test srv1") ))
+	srv2.Send(res_packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test srv2") ))
 
 	rec := srv1.Received()
-	if !valid_any_step(t, rec, pre_sleep.Marshal(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1vrs tset") ).Marshal()) {
+	if !valid_any_step(t, rec, pre_sleep, req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1vrs tset") )) {
 		return
 	}
 
 	rec = srv1.Received()
-	if !valid_any_step(t, rec, pre_sleep.Marshal(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1vrs tset") ).Marshal()) {
+	if !valid_any_step(t, rec, pre_sleep, req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1vrs tset") )) {
 		return
 	}
 
 	rec = srv2.Received()
-	if !valid_any_step(t, rec, pre_sleep.Marshal(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("2vrs tset") ).Marshal()) {
+	if !valid_any_step(t, rec, pre_sleep, req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("2vrs tset") )) {
 		return
 	}
 
 	rec = srv2.Received()
-	if !valid_any_step(t, rec, pre_sleep.Marshal(), req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("2vrs tset") ).Marshal()) {
+	if !valid_any_step(t, rec, pre_sleep, req_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("2vrs tset") )) {
 		return
 	}
 }

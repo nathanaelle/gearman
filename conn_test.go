@@ -93,10 +93,13 @@ func (nc *testConn)Received() (b []byte) {
 }
 
 
-func (nc *testConn)Send(b []byte) {
-	nc.r_ready <- b
+func (nc *testConn)Send(b Packet) {
+	nc.r_ready <- b.Marshal()
 }
 
+func (nc *testConn)SendByte(b []byte) {
+	nc.r_ready <- b
+}
 
 
 

@@ -8,7 +8,17 @@ import (
 
 
 
-func	valid_step(t *testing.T, rcvd, expected []byte) bool {
+func	valid_step(t *testing.T, rcvd []byte, expected Packet) bool {
+	if bytes.Equal(rcvd,expected.Marshal()) {
+		return	true
+	}
+
+	t.Errorf("received %+v expected %+v", rcvd, expected.Marshal())
+	return	false
+}
+
+
+func	valid_byte(t *testing.T, rcvd, expected []byte) bool {
 	if bytes.Equal(rcvd,expected) {
 		return	true
 	}
@@ -38,9 +48,9 @@ func	valid_err(t *testing.T, err, expected_err error) bool {
 }
 
 
-func	valid_any_step(t *testing.T, rcvd []byte, expecteds ...[]byte) bool {
+func	valid_any_step(t *testing.T, rcvd []byte, expecteds ...Packet) bool {
 	for _,expected := range expecteds {
-		if bytes.Equal(rcvd,expected) {
+		if bytes.Equal(rcvd,expected.Marshal()) {
 			return	true
 		}
 	}
@@ -53,7 +63,7 @@ func	valid_any_step(t *testing.T, rcvd []byte, expecteds ...[]byte) bool {
 
 func valid_result(t *testing.T, expected_res []byte, expected_err error) (func([]byte,error)bool) {
 	return func(res []byte, err error) bool {
-		return valid_err(t, err, expected_err) && valid_step(t, res, expected_res);
+		return valid_err(t, err, expected_err) && valid_byte(t, res, expected_res);
 	}
 }
 
@@ -65,7 +75,7 @@ func packet_received_is(t *testing.T, c net.Conn, expected_pkt Packet) bool {
 		return	false
 	}
 
-	return	valid_step(t, pkt.Marshal(), expected_pkt.Marshal())
+	return	valid_step(t, pkt.Marshal(), expected_pkt)
 }
 
 
@@ -83,11 +93,11 @@ func Test_Client_simple(t *testing.T) {
 
 	r := cli.Submit( NewTask("reverse", []byte("test") ) )
 
-	if !valid_step(t, srv.Received(), req_packet(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test")).Marshal()) {
+	if !valid_step(t, srv.Received(), req_packet(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test"))) {
 		return
 	}
-	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:1")).Marshal())
-	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset")).Marshal())
+	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:1")))
+	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset")))
 
 	if !valid_result(t, []byte("tset"), nil)(r.Value()) {
 		return
@@ -109,23 +119,23 @@ func Test_Client_unordered_result(t *testing.T) {
 	r2 := cli.Submit( NewTask("reverse", []byte("test 2") ) )
 	r3 := cli.Submit( NewTask("reverse", []byte("test 3") ) )
 
-	if !valid_step(t, srv.Received(), req_packet(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test 1")).Marshal()) {
+	if !valid_step(t, srv.Received(), req_packet(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test 1"))) {
 		return
 	}
-	if !valid_step(t, srv.Received(), req_packet(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test 2")).Marshal()) {
+	if !valid_step(t, srv.Received(), req_packet(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test 2"))) {
 		return
 	}
-	if !valid_step(t, srv.Received(), req_packet(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test 3")).Marshal()) {
+	if !valid_step(t, srv.Received(), req_packet(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test 3"))) {
 		return
 	}
 
-	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:1")).Marshal())
-	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:2")).Marshal())
-	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:3")).Marshal())
+	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:1")))
+	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:2")))
+	srv.Send(res_packet(JOB_CREATED, []byte("H:lap:3")))
 
-	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:2"), []byte("2 tset")).Marshal())
-	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:3"), []byte("3 tset")).Marshal())
-	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1 tset")).Marshal())
+	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:2"), []byte("2 tset")))
+	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:3"), []byte("3 tset")))
+	srv.Send(res_packet(WORK_COMPLETE, []byte("H:lap:1"), []byte("1 tset")))
 
 	if !valid_result(t, []byte("2 tset"), nil)(r2.Value()) {
 		return
