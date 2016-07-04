@@ -110,21 +110,18 @@ func (p *pool)rloop(server Conn) {
 			server.SetReadDeadline(time.Now().Add(100*time.Millisecond))
 			pkt,err	= ReadPacket(server)
 
-			for err != nil {
-				if is_eof(err) {
-					p.reconnect(server)
-					break
-				}
-				if is_timeout(err) {
-					break
-				}
-//				log.Println(err)
-				server.SetReadDeadline(time.Now().Add(100*time.Millisecond))
-				pkt,err	= ReadPacket(server)
-			}
-
-			if err == nil {
+			switch	{
+			case	err == nil:
 				p.s_queue <- message{ p, server, pkt }
+
+			case	is_timeout(err):
+
+			case	is_eof(err):
+				p.reconnect(server)
+
+			default:
+				time.Sleep(5*time.Second)
+//				log.Println(err)
 			}
 		}
 	}
