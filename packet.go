@@ -57,7 +57,7 @@ var	(
 
 
 func	req_packet(c Command, data ...[]byte) Packet {
-	p,err	:= newPktnlen(c, REQ, REQ, bytes.Join(data, []byte{ 0 } ))
+	p,err	:= newPktnlen(c, REQ, bytes.Join(data, []byte{ 0 } ))
 	if err != nil {
 		panic(fmt.Sprintf("%v got %v", c, err))
 	}
@@ -66,7 +66,7 @@ func	req_packet(c Command, data ...[]byte) Packet {
 
 
 func	res_packet(c Command, data ...[]byte) Packet {
-	p,err	:= newPktnlen(c, RES, RES, bytes.Join(data, []byte{ 0 } ))
+	p,err	:= newPktnlen(c, RES, bytes.Join(data, []byte{ 0 } ))
 	if err != nil {
 		panic(fmt.Sprintf("%v got %v", c, err))
 	}
@@ -87,10 +87,7 @@ func cant_do(h string) Packet {
 
 
 
-func newPkt0size(cmd Command, given_hello, expected_hello Hello, size int) (Packet,error) {
-	if given_hello != expected_hello {
-		return	nil, &RESQRequiredError{cmd, given_hello, expected_hello}
-	}
+func newPkt0size(cmd Command, given_hello Hello, size int) (Packet,error) {
 	if size != 0 {
 		return	nil, PayloadInEmptyPacketError
 	}
@@ -141,10 +138,7 @@ func (pl pkt0size)Encode(buff []byte) (int,error) {
 }
 
 
-func newPkt1len(cmd Command, given_hello, expected_hello Hello, payload []byte) (Packet,error) {
-	if given_hello != expected_hello {
-		return	nil, &RESQRequiredError{cmd, given_hello, expected_hello}
-	}
+func newPkt1len(cmd Command, given_hello Hello, payload []byte) (Packet,error) {
 	return	&pkt1len{ given_hello, cmd, uint32(len(payload)), payload }, nil
 }
 
@@ -198,10 +192,10 @@ func (pl pkt1len)Encode(buff []byte) (int,error) {
 
 
 //	generic packet with arbitrary payload
-func newPktnlen(cmd Command, hello, expected_hello Hello, payload []byte) (Packet,error) {
-	expected_len, ok := lenCommand[cmd]
-	if !ok {
-		return	&pkt0size{ hello, cmd },nil
+func newPktnlen(cmd Command, hello Hello, payload []byte) (Packet,error) {
+	expected_len	:= cmd.PayloadLen()
+	if expected_len == 0 {
+		return	newPkt0size(cmd, hello, len(payload))
 	}
 
 	pkt := pkt1len{ hello, cmd, uint32(len(payload)), payload }

@@ -20,9 +20,11 @@ type loopreader struct {
 	buff	[]byte
 }
 
+
 func LoopReader(b []byte) io.Reader {
 	return &loopreader { 0, b }
 }
+
 
 func (lr *loopreader)Read(b []byte) (int,error) {
 	l := len(lr.buff[lr.idx:])

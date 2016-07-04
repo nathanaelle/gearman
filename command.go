@@ -12,7 +12,15 @@ type	(
 const	(
 	REQ	Hello	= 0x00524551
 	RES	Hello	= 0x00524553
+)
 
+const	(
+	HELLO_COMMAND_NONE	int	= 1<<iota
+	HELLO_COMMAND_RES
+	HELLO_COMMAND_REQ
+)
+
+const	(
 	CAN_DO			Command	= 1	// REQ    Worker
 	CANT_DO			Command	= 2	// REQ    Worker
 	RESET_ABILITIES		Command	= 3	// REQ    Worker
@@ -82,6 +90,46 @@ var lenCommand	map[Command]int = map[Command]int{
 	SUBMIT_JOB_EPOCH:	4,
 }
 
+var helloCommand	map[Command]int = map[Command]int{
+	CAN_DO:			HELLO_COMMAND_REQ,
+	CANT_DO:		HELLO_COMMAND_REQ,
+	RESET_ABILITIES:	HELLO_COMMAND_REQ,
+	PRE_SLEEP:		HELLO_COMMAND_REQ,
+	NOOP:			HELLO_COMMAND_RES,
+	SUBMIT_JOB:		HELLO_COMMAND_REQ,
+	JOB_CREATED:		HELLO_COMMAND_RES,
+	GRAB_JOB:		HELLO_COMMAND_REQ,
+	NO_JOB:			HELLO_COMMAND_RES,
+	JOB_ASSIGN:		HELLO_COMMAND_RES,
+	WORK_STATUS:		HELLO_COMMAND_REQ|HELLO_COMMAND_RES,
+	WORK_COMPLETE:		HELLO_COMMAND_REQ|HELLO_COMMAND_RES,
+	WORK_FAIL:		HELLO_COMMAND_REQ|HELLO_COMMAND_RES,
+	GET_STATUS:		HELLO_COMMAND_REQ,
+	ECHO_REQ:		HELLO_COMMAND_REQ,
+	ECHO_RES:		HELLO_COMMAND_RES,
+	SUBMIT_JOB_BG:		HELLO_COMMAND_REQ,
+	ERROR:			HELLO_COMMAND_RES,
+	STATUS_RES:		HELLO_COMMAND_RES,
+	SUBMIT_JOB_HIGH:	HELLO_COMMAND_REQ,
+	SET_CLIENT_ID:		HELLO_COMMAND_REQ,
+	CAN_DO_TIMEOUT:		HELLO_COMMAND_REQ,
+	ALL_YOURS:		HELLO_COMMAND_REQ,
+	WORK_EXCEPTION:		HELLO_COMMAND_REQ|HELLO_COMMAND_RES,
+	OPTION_REQ:		HELLO_COMMAND_REQ,
+	OPTION_RES:		HELLO_COMMAND_RES,
+	WORK_DATA:		HELLO_COMMAND_REQ|HELLO_COMMAND_RES,
+	WORK_WARNING:		HELLO_COMMAND_REQ|HELLO_COMMAND_RES,
+	GRAB_JOB_UNIQ:		HELLO_COMMAND_REQ,
+	JOB_ASSIGN_UNIQ:	HELLO_COMMAND_RES,
+	SUBMIT_JOB_HIGH_BG:	HELLO_COMMAND_REQ,
+	SUBMIT_JOB_LOW:		HELLO_COMMAND_REQ,
+	SUBMIT_JOB_LOW_BG:	HELLO_COMMAND_REQ,
+	SUBMIT_JOB_SCHED:	HELLO_COMMAND_REQ,
+	SUBMIT_JOB_EPOCH:	HELLO_COMMAND_REQ,
+
+}
+
+
 
 func (h Hello)String() string {
 	switch	h {
@@ -89,6 +137,42 @@ func (h Hello)String() string {
 	case	RES:	return	"RES"
 	default:	return	fmt.Sprintf( "WTF[%08x]", uint32(h) )
 	}
+}
+
+
+func (c Command)PayloadLen() int {
+	expected_len, ok := lenCommand[c]
+	if !ok {
+		return	0
+	}
+	return	expected_len
+}
+
+func (cmd Command)MatchHello(hello Hello) error {
+	expected_match, ok := helloCommand[cmd]
+	if !ok {
+		return	&RESQRequiredError{cmd, hello, 0}
+	}
+
+	exp_req	:= (expected_match&HELLO_COMMAND_REQ) == HELLO_COMMAND_REQ
+	exp_res	:= (expected_match&HELLO_COMMAND_RES) == HELLO_COMMAND_RES
+	is_req	:= (hello == REQ)
+	is_res	:= (hello == RES)
+
+	switch	{
+	case	is_req:
+		if exp_req {
+			return	nil
+		}
+		return	&RESQRequiredError{cmd, hello, RES}
+
+	case	is_res:
+		if exp_res {
+			return	nil
+		}
+		return	&RESQRequiredError{cmd, hello, REQ}
+	}
+	return	&RESQRequiredError{cmd, hello, 0}
 }
 
 
@@ -135,22 +219,18 @@ func (c Command)String() string {
 
 
 func (cmd Command)Unmarshal(hello Hello, payload []byte) (Packet,error) {
-	switch	cmd {
-	case	PRE_SLEEP, RESET_ABILITIES, GRAB_JOB, GRAB_JOB_UNIQ, ALL_YOURS:
-		return	newPkt0size(cmd, hello, REQ, len(payload) )
-
-	case	NOOP, NO_JOB:
-		return	newPkt0size(cmd, hello, RES, len(payload) )
-
-	case	WORK_FAIL:
-		return	&pkt1len{ hello, cmd, uint32(len(payload)), payload }, nil
-
-	case	ECHO_REQ, CAN_DO, CANT_DO, GET_STATUS, SET_CLIENT_ID:
-		return	newPkt1len(cmd, hello, REQ, payload)
-
-	case	ECHO_RES, JOB_CREATED:
-		return	newPkt1len(cmd, hello, RES, payload)
+	if err := cmd.MatchHello(hello); err != nil {
+		return	nil, err
 	}
 
-	return newPktnlen(cmd, hello, RES, payload)
+	switch	cmd.PayloadLen() {
+	case	0:
+		return	newPkt0size(cmd, hello, len(payload) )
+
+	case	1:
+		return	newPkt1len(cmd, hello, payload)
+
+	default:
+		return	newPktnlen(cmd, hello, payload)
+	}
 }
