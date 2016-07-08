@@ -6,6 +6,7 @@ import	(
 )
 
 type	(
+	//	Gearman Packet
 	Packet	interface {
 		Marshal()	[]byte
 		Encode([]byte)	(int,error)

@@ -21,41 +21,52 @@ const	(
 )
 
 const	(
-	CAN_DO			Command	= 1	// REQ    Worker
-	CANT_DO			Command	= 2	// REQ    Worker
-	RESET_ABILITIES		Command	= 3	// REQ    Worker
-	PRE_SLEEP		Command	= 4	// REQ    Worker
-	NOOP			Command	= 6	// RES    Worker
-	SUBMIT_JOB		Command	= 7	// REQ    Client
-	JOB_CREATED		Command	= 8	// RES    Client
-	GRAB_JOB		Command	= 9	// REQ    Worker
-	NO_JOB			Command	= 10	// RES    Worker
-	JOB_ASSIGN		Command	= 11	// RES    Worker
-	WORK_STATUS		Command	= 12	// REQ    Worker		RES    Client
-	WORK_COMPLETE		Command	= 13	// REQ    Worker		RES    Client
-	WORK_FAIL		Command	= 14	// REQ    Worker		RES    Client
-	GET_STATUS		Command	= 15	// REQ    Client
-	ECHO_REQ		Command	= 16	// REQ    Client/Worker
-	ECHO_RES		Command	= 17	// RES    Client/Worker
-	SUBMIT_JOB_BG		Command	= 18	// REQ    Client
-	ERROR			Command	= 19	// RES    Client/Worker
-	STATUS_RES		Command	= 20	// RES    Client
-	SUBMIT_JOB_HIGH		Command	= 21	// REQ    Client
-	SET_CLIENT_ID		Command	= 22	// REQ    Worker
-	CAN_DO_TIMEOUT		Command	= 23	// REQ    Worker
-	ALL_YOURS		Command	= 24	// REQ    Worker
-	WORK_EXCEPTION		Command	= 25	// REQ    Worker		RES    Client
-	OPTION_REQ		Command	= 26	// REQ    Client/Worker
-	OPTION_RES		Command	= 27	// RES    Client/Worker
-	WORK_DATA		Command	= 28	// REQ    Worker		RES    Client
-	WORK_WARNING		Command	= 29	// REQ    Worker		RES    Client
-	GRAB_JOB_UNIQ		Command	= 30	// REQ    Worker
-	JOB_ASSIGN_UNIQ		Command	= 31	// RES    Worker
-	SUBMIT_JOB_HIGH_BG	Command	= 32	// REQ    Client
-	SUBMIT_JOB_LOW		Command	= 33	// REQ    Client
-	SUBMIT_JOB_LOW_BG	Command	= 34	// REQ    Client
-	SUBMIT_JOB_SCHED	Command	= 35	// REQ    Client
-	SUBMIT_JOB_EPOCH	Command	= 36	// REQ    Client
+	_			Command = iota
+	CAN_DO			//	1	REQ    Worker
+	CANT_DO			//	2	REQ    Worker
+	RESET_ABILITIES		//	3	REQ    Worker
+	PRE_SLEEP		//	4	REQ    Worker
+	_			//	5
+	NOOP			//	6	RES    Worker
+	SUBMIT_JOB		//	7	REQ    Client
+	JOB_CREATED		//	8	RES    Client
+	GRAB_JOB		//	9	REQ    Worker
+	NO_JOB			//	10	RES    Worker
+	JOB_ASSIGN		//	11	RES    Worker
+	WORK_STATUS		//	12	REQ    Worker		RES    Client
+	WORK_COMPLETE		//	13	REQ    Worker		RES    Client
+	WORK_FAIL		//	14	REQ    Worker		RES    Client
+	GET_STATUS		//	15	REQ    Client
+	ECHO_REQ		//	16	REQ    Client/Worker
+	ECHO_RES		//	17	RES    Client/Worker
+	SUBMIT_JOB_BG		//	18	REQ    Client
+	ERROR			//	19	RES    Client/Worker
+	STATUS_RES		//	20	RES    Client
+	SUBMIT_JOB_HIGH		//	21	REQ    Client
+	SET_CLIENT_ID		//	22	REQ    Worker
+	CAN_DO_TIMEOUT		//	23	REQ    Worker
+	ALL_YOURS		//	24	REQ    Worker
+	WORK_EXCEPTION		//	25	REQ    Worker		RES    Client
+	OPTION_REQ		//	26	REQ    Client/Worker
+	OPTION_RES		//	27	RES    Client/Worker
+	WORK_DATA		//	28	REQ    Worker		RES    Client
+	WORK_WARNING		//	29	REQ    Worker		RES    Client
+	GRAB_JOB_UNIQ		//	30	REQ    Worker
+	JOB_ASSIGN_UNIQ		//	31	RES    Worker
+	SUBMIT_JOB_HIGH_BG	//	32	REQ    Client
+	SUBMIT_JOB_LOW		//	33	REQ    Client
+	SUBMIT_JOB_LOW_BG	//	34	REQ    Client
+	SUBMIT_JOB_SCHED	//	35	REQ    Client
+	SUBMIT_JOB_EPOCH	//	36	REQ    Client
+
+	OK			Command = iota+1000
+	ADMIN_WORKERS
+	ADMIN_STATUS
+	ADMIN_MAX_QUEUE
+	ADMIN_SHUTDOWN
+	ADMIN_VERSION
+	ADMIN_WORKERS_LIST
+	ADMIN_STATUS_LIST
 )
 
 
@@ -88,6 +99,11 @@ var lenCommand	map[Command]int = map[Command]int{
 	SUBMIT_JOB_LOW_BG:	3,
 	SUBMIT_JOB_SCHED:	8,
 	SUBMIT_JOB_EPOCH:	4,
+	OK:			1,
+	ADMIN_SHUTDOWN:		1,
+	ADMIN_MAX_QUEUE:	2,
+	ADMIN_WORKERS_LIST:	-1,
+	ADMIN_STATUS_LIST:	-1,
 }
 
 var helloCommand	map[Command]int = map[Command]int{
@@ -126,7 +142,14 @@ var helloCommand	map[Command]int = map[Command]int{
 	SUBMIT_JOB_LOW_BG:	HELLO_COMMAND_REQ,
 	SUBMIT_JOB_SCHED:	HELLO_COMMAND_REQ,
 	SUBMIT_JOB_EPOCH:	HELLO_COMMAND_REQ,
-
+	ADMIN_WORKERS:		HELLO_COMMAND_REQ,
+	ADMIN_STATUS:		HELLO_COMMAND_REQ,
+	ADMIN_MAX_QUEUE:	HELLO_COMMAND_REQ,
+	ADMIN_SHUTDOWN:		HELLO_COMMAND_REQ,
+	ADMIN_VERSION:		HELLO_COMMAND_REQ,
+	OK:			HELLO_COMMAND_RES,
+	ADMIN_WORKERS_LIST:	HELLO_COMMAND_RES,
+	ADMIN_STATUS_LIST:	HELLO_COMMAND_RES,
 }
 
 
@@ -213,12 +236,22 @@ func (c Command)String() string {
 	case	SUBMIT_JOB_LOW_BG:	return	"SUBMIT_JOB_LOW_BG"
 	case	SUBMIT_JOB_SCHED:	return	"SUBMIT_JOB_SCHED"
 	case	SUBMIT_JOB_EPOCH:	return	"SUBMIT_JOB_EPOCH"
+	case	OK:			return	"OK"
+	case	ADMIN_WORKERS:		return	"ADMIN_WORKERS"
+	case	ADMIN_STATUS:		return	"ADMIN_STATUS"
+	case	ADMIN_MAX_QUEUE:	return	"ADMIN_MAX_QUEUE"
+	case	ADMIN_SHUTDOWN:		return	"ADMIN_SHUTDOWN"
+	case	ADMIN_VERSION:		return	"ADMIN_VERSION"
+	case	ADMIN_WORKERS_LIST:	return	"ADMIN_WORKERS_LIST"
+	case	ADMIN_STATUS_LIST:	return	"ADMIN_STATUS_LIST"
+
 	default:			return	fmt.Sprintf("CMD[%08x]", uint32(c))
 	}
 }
 
 
 func (cmd Command)Unmarshal(hello Hello, payload []byte) (Packet,error) {
+
 	if err := cmd.MatchHello(hello); err != nil {
 		return	nil, err
 	}

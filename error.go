@@ -34,7 +34,9 @@ var	(
 	unknownError			error	= errors.New("Unspecified Error happens")
 	BuffTooSmallError		error	= errors.New("Buffer is Too Small")
 	PayloadInEmptyPacketError	error	= errors.New("Found payload in expected empty packet")
+	TextProtocolError		error	= errors.New("Text Protocol is unsupported")
 )
+
 
 func (e *ExceptionError)Error() string {
 	return	fmt.Sprintf("Error [%x]", e.Payload)

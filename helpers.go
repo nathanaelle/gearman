@@ -11,17 +11,41 @@ import	(
 
 //	unmarshal bigendian encoded uint32 to uint32
 func	be2uint32(b []byte) uint32 {
-	return uint32(b[3]) | uint32(b[2])<<8 | uint32(b[1])<<16 | uint32(b[0])<<24
+	return	uint32(b[3])     | uint32(b[2])<<8 |
+		uint32(b[1])<<16 | uint32(b[0])<<24
 }
 
 
 //	marshal uint32 to bigendian encoded uint32
 func uint322be(b []byte, v uint32) {
-	b[0] = byte(v >> 24)
-	b[1] = byte(v >> 16)
-	b[2] = byte(v >> 8)
-	b[3] = byte(v)
+	b[0] = byte(v>>24)
+	b[1] = byte(v>>16)
+	b[2] = byte(v>>8 )
+	b[3] = byte(v    )
 }
+
+
+//	unmarshal bigendian encoded uint64 to uint64
+func	be2uint64(b []byte) uint64 {
+	return	uint32(b[7])     | uint32(b[6])<<8  |
+		uint32(b[5])<<16 | uint32(b[4])<<24 |
+		uint32(b[3])<<32 | uint32(b[2])<<40 |
+		uint32(b[1])<<48 | uint32(b[0])<<56
+}
+
+
+//	marshal uint64 to bigendian encoded uint64
+func uint642be(b []byte, v uint32) {
+	b[0] = byte(v>>56)
+	b[1] = byte(v>>48)
+	b[2] = byte(v>>40)
+	b[3] = byte(v>>32)
+	b[4] = byte(v>>24)
+	b[5] = byte(v>>16)
+	b[6] = byte(v>>8 )
+	b[7] = byte(v    )
+}
+
 
 
 func debug(dbg *log.Logger, msg string, args ...interface{}) {
@@ -63,7 +87,14 @@ func ReadPacket(c io.Reader) (Packet,error) {
 	var	header	[12]byte
 	var	payload	[]byte
 
-	if _, err := c.Read(header[:]); err != nil {
+	if _, err := c.Read(header[0:1]); err != nil {
+		return nil,err
+	}
+	if header[0] != 0 {
+		return nil,TextProtocolError
+	}
+
+	if _, err := c.Read(header[1:]); err != nil {
 		return nil,err
 	}
 	h	:= Hello(be2uint32(header[0:4]))
