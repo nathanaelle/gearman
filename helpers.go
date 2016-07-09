@@ -27,10 +27,10 @@ func uint322be(b []byte, v uint32) {
 
 //	unmarshal bigendian encoded uint64 to uint64
 func	be2uint64(b []byte) uint64 {
-	return	uint32(b[7])     | uint32(b[6])<<8  |
-		uint32(b[5])<<16 | uint32(b[4])<<24 |
-		uint32(b[3])<<32 | uint32(b[2])<<40 |
-		uint32(b[1])<<48 | uint32(b[0])<<56
+	return	uint64(b[7])     | uint64(b[6])<<8  |
+		uint64(b[5])<<16 | uint64(b[4])<<24 |
+		uint64(b[3])<<32 | uint64(b[2])<<40 |
+		uint64(b[1])<<48 | uint64(b[0])<<56
 }
 
 
