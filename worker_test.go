@@ -2,7 +2,7 @@ package gearman
 
 import (
 	"io"
-	_ "net"
+	"net"
 	"testing"
 )
 
@@ -150,7 +150,7 @@ func Test_Worker_netcon(t *testing.T) {
 			go func(c net.Conn) {
 				defer c.Close()
 
-				if !packet_received_is(t, c, can_do("reverse")) {
+				if !packet_received_is(t, c, packet(CAN_DO, []byte("reverse"))) {
 					return
 				}
 
