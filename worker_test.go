@@ -116,7 +116,6 @@ func Test_Worker_two_servers(t *testing.T) {
 	}
 }
 
-
 func Test_Worker_netcon(t *testing.T) {
 	end := make(chan struct{})
 
@@ -182,4 +181,5 @@ func Test_Worker_netcon(t *testing.T) {
 		}
 	}
 }
+
 //*/

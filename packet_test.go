@@ -45,7 +45,7 @@ var valid_packet []packet_test = []packet_test{
 	{
 		[]byte{0, 0x52, 0x45, 0x51, 0, 0, 0, 0x11, 0, 0, 0, 0x0d, 'i', 'n', 't', 'e', 'r', 'n', 'a', 'l', 0, 'e', 'c', 'h', 'o'},
 		nil,
-		&UndefinedPacketError{ Command(0x0052455100000011) },
+		&UndefinedPacketError{Command(0x0052455100000011)},
 		0,
 	},
 	{
@@ -144,7 +144,6 @@ func BenchmarkUnmarshalPktcommon(b *testing.B) {
 		JOB_ASSIGN.Unmarshal(r)
 	}
 }
-
 
 func BenchmarkMarshalPkt0size(b *testing.B) {
 	var buff [12]byte
