@@ -13,6 +13,7 @@ type	(
 	Conn	interface {
 		io.Writer
 		io.Reader
+		io.Closer
 		SetReadDeadline(time.Time)
 		SetWriteDeadline(time.Time)
 		Redial()
@@ -22,6 +23,7 @@ type	(
 	}
 
 	netConn	struct {
+		close		bool
 		counter		*int32
 		network,address string
 		conn		net.Conn
@@ -34,9 +36,17 @@ func NetConn(network,address string) Conn {
 		counter:	new(int32),
 		network:	network,
 		address:	address,
+		close:		false,
 	}
 
 	return nc
+}
+
+
+func (nc *netConn)Close() error {
+	nc.close = true
+	nc.conn.Close()
+	return	nil
 }
 
 
@@ -49,12 +59,12 @@ func (nc *netConn)Redial() {
 	if nc.conn != nil {
 		nc.conn.Close()
 	}
-
-	nc.conn,err = net.Dial(nc.network, nc.address)
-	for err != nil {
-		fmt.Printf("!>	%v",err)
-		time.Sleep(100*time.Millisecond)
+	if !nc.close {
 		nc.conn,err = net.Dial(nc.network, nc.address)
+		if err != nil {
+			fmt.Printf("!>	%v",err)
+			time.Sleep(500*time.Millisecond)
+		}
 	}
 }
 

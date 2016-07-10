@@ -101,6 +101,7 @@ func (p *pool)reconnect(server Conn) {
 func (p *pool)rloop(server Conn) {
 	var	err	error
 	var	pkt	Packet
+	defer	server.Close()
 
 	for {
 		select	{
@@ -131,6 +132,7 @@ func (p *pool)rloop(server Conn) {
 
 func (p *pool)wloop(server Conn,send_to <-chan Packet) {
 	var	err	error
+	defer	server.Close()
 
 	for {
 		select	{

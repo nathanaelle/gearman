@@ -22,6 +22,9 @@ func trivialWorker(t *testing.T, end chan struct{}, srv ...Conn) {
 	}))
 
 	<-end
+	for _,s := range srv {
+		s.Close()
+	}
 }
 
 func Test_Worker_simple(t *testing.T) {
@@ -115,6 +118,7 @@ func Test_Worker_two_servers(t *testing.T) {
 		return
 	}
 }
+
 
 func Test_Worker_netcon(t *testing.T) {
 	end := make(chan struct{})
