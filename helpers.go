@@ -35,7 +35,7 @@ func	be2uint64(b []byte) uint64 {
 
 
 //	marshal uint64 to bigendian encoded uint64
-func uint642be(b []byte, v uint32) {
+func uint642be(b []byte, v uint64) {
 	b[0] = byte(v>>56)
 	b[1] = byte(v>>48)
 	b[2] = byte(v>>40)
@@ -87,18 +87,15 @@ func ReadPacket(c io.Reader) (Packet,error) {
 	var	header	[12]byte
 	var	payload	[]byte
 
-	if _, err := c.Read(header[0:1]); err != nil {
+	if _, err := c.Read(header[:]); err != nil {
 		return nil,err
 	}
 	if header[0] != 0 {
 		return nil,TextProtocolError
 	}
 
-	if _, err := c.Read(header[1:]); err != nil {
-		return nil,err
-	}
-	h	:= Hello(be2uint32(header[0:4]))
-	cmd	:= Command(be2uint32(header[4:8]))
+	//h	:= Hello(be2uint32(header[0:4]))
+	cmd	:= Command(be2uint64(header[0:8]))
 	size	:= be2uint32(header[8:12])
 
 	if size > 0 {
@@ -113,7 +110,7 @@ func ReadPacket(c io.Reader) (Packet,error) {
 		}
 	}
 
-	return	cmd.Unmarshal(h, payload)
+	return	cmd.Unmarshal(payload[:])
 }
 
 

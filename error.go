@@ -11,16 +11,10 @@ type	(
 		Payload	[]byte
 	}
 
-	RESQRequiredError struct {
-		Cmd		Command
-		Given		Hello
-		Expected	Hello
+	UndefinedPacketError struct {
+		Cmd	Command
 	}
 
-	RESRequiredError struct {
-		Cmd	Command
-		Hello	Hello
-	}
 
 	PayloadLenError struct {
 		Cmd		Command
@@ -42,10 +36,10 @@ func (e *ExceptionError)Error() string {
 	return	fmt.Sprintf("Error [%x]", e.Payload)
 }
 
-func (e *RESQRequiredError)Error() string {
-	return	fmt.Sprintf("[%v] Required for [%v] but got [%v]", e.Expected, e.Cmd, e.Given)
-}
-
 func (e *PayloadLenError)Error() string {
 	return	fmt.Sprintf("[%d] itemps Required for [%v] payload but got [%v] items", e.ExpectedLen, e.Cmd, e.GivenLen)
+}
+
+func (e *UndefinedPacketError)Error() string {
+	return	fmt.Sprintf("%v is undefined", e.Cmd)
 }

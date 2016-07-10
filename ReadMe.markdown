@@ -40,25 +40,33 @@ w.AddHandler("reverse", gearman.JobHandler(func(payload io.Reader,reply io.Write
 
 ## Benchmarks
 
-### Read and decode
+
+### Read on LoopReader
 
 ```
-BenchmarkReadPkt0size-4    	20000000	       68.5 ns/op	      24 B/op	       2 allocs/op
-BenchmarkReadPkt1len-4     	10000000	       137 ns/op	      48 B/op	       3 allocs/op
-BenchmarkReadPktcommon-4   	 5000000	       277 ns/op	     144 B/op	       4 allocs/op
+BenchmarkReadPkt0size-4      	20000000	        68.6 ns/op	      24 B/op	       2 allocs/op
+BenchmarkReadPkt1len-4       	10000000	       133   ns/op	      40 B/op	       3 allocs/op
+BenchmarkReadPktcommon-4     	 5000000	       260   ns/op	     144 B/op	       4 allocs/op
+```
+
+### Unmarshal
+
+```
+BenchmarkUnmarshalPkt0size-4 	100000000	        24.0 ns/op	       8 B/op	       1 allocs/op
+BenchmarkUnmarshalPkt1len-4  	30000000	        55.2 ns/op	      48 B/op	       1 allocs/op
+BenchmarkUnmarshalPktcommon-4	10000000	       146   ns/op	      96 B/op	       2 allocs/op
 ```
 
 
-### Encode
+### Marshal
 
 ```
-BenchmarkMarshalPkt0size-4 	100000000	        14.3 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMarshalPkt1len-4  	100000000	        22.6 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMarshalPktcommon-4	100000000	        22.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshalPkt0size-4   	100000000	        14.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshalPkt1len-4    	100000000	        22.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshalPktcommon-4  	100000000	        22.5 ns/op	       0 B/op	       0 allocs/op
 ```
 
 
 ## Todo
 
   * Documentation
-  * Comments

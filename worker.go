@@ -89,13 +89,13 @@ func (w *Worker)run(msg message) {
 	status, err := isolated_Serve( w.get_handler(name), bytes.NewReader(msg.pkt.At(2)), res, msg.work_data() )
 	switch	{
 	case	err == nil && status:
-		msg.reply(WORK_COMPLETE, res.Bytes())
+		msg.reply(WORK_COMPLETE_WRK, res.Bytes())
 
 	case	err == nil && !status:
 		msg.reply(WORK_FAIL)
 
 	case	err != nil:
-		msg.reply(WORK_EXCEPTION, []byte(err.Error()))
+		msg.reply(WORK_EXCEPTION_WRK, []byte(err.Error()))
 	}
 }
 

@@ -30,6 +30,9 @@ type	(
 )
 
 
+var	NilTask	Task	= &nullTask{}
+
+
 func	slice2TaskID(d []byte) (tid TaskID, err error) {
 	if len(d) > 64 {
 		err = errors.New("tid too long")
@@ -41,12 +44,11 @@ func	slice2TaskID(d []byte) (tid TaskID, err error) {
 }
 
 
-var	NilTask	*nullTask	= &nullTask{}
 
 
 func NewTask(cmd string, payload []byte) Task {
 	r := &task {
-		packet:	req_packet(SUBMIT_JOB, []byte(cmd), []byte{},payload),
+		packet:	packet(SUBMIT_JOB, []byte(cmd), []byte{},payload),
 		solved:	new(sync.WaitGroup),
 	}
 
