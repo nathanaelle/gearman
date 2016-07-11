@@ -44,6 +44,11 @@ func	slice2TaskID(d []byte) (tid TaskID, err error) {
 }
 
 
+func (tid TaskID)Encode() []byte {
+	v := [64]byte(tid)
+	return	v[:]
+}
+
 
 
 func NewTask(cmd string, payload []byte) Task {

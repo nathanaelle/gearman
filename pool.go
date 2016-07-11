@@ -8,16 +8,27 @@ import	(
 
 
 
+type (
+	Message	struct {
+		Reply	chan<- Packet
+		Server	Conn
+		Pkt	Packet
+	}
+
+
+)
+
+
 type pool struct {
 	sync.Mutex
 	pool		map[Conn] chan Packet
-	s_queue		chan<- message
+	s_queue		chan<- Message
 	r_end		<-chan struct{}
 	handlers	map[string]int32
 }
 
 
-func (p *pool)new(s_queue chan<- message, r_end <-chan struct{}) {
+func (p *pool)new(s_queue chan<- Message, r_end <-chan struct{}) {
 	p.pool		= make(map[Conn] chan Packet)
 	p.handlers	= make(map[string]int32)
 	p.s_queue	= s_queue
@@ -94,7 +105,7 @@ func (p *pool)reconnect(server Conn) {
 		p.pool[server] <- packet(CAN_DO, []byte(h))
 	}
 
-	p.s_queue <- message{ p, server, internal_echo_packet }
+	p.s_queue <- Message{ p.pool[server], server, internal_echo_packet }
 }
 
 
@@ -114,7 +125,7 @@ func (p *pool)rloop(server Conn) {
 
 			switch	{
 			case	err == nil:
-				p.s_queue <- message{ p, server, pkt }
+				p.s_queue <- Message{ p.pool[server], server, pkt }
 
 			case	is_timeout(err):
 

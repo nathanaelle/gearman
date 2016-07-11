@@ -9,7 +9,7 @@ type	(
 		configured	bool
 		pool
 		jobs		map[TaskID]Task
-		m_queue		chan message
+		m_queue		chan Message
 		r_q		[]Task
 	}
 )
@@ -19,7 +19,7 @@ type	(
 // r_end is a channel to signal to the Client to end the process
 func SingleServerClient(r_end <-chan struct{}, debug *log.Logger) Client {
 	c		:= new(singleServer)
-	c.m_queue	= make(chan message,10)
+	c.m_queue	= make(chan Message,10)
 	c.jobs		= make(map[TaskID]Task)
 	c.pool.new(c.m_queue, r_end)
 
@@ -29,12 +29,13 @@ func SingleServerClient(r_end <-chan struct{}, debug *log.Logger) Client {
 }
 
 
-func (c *singleServer)MessageQueue() <-chan message {
-	return c.m_queue
+func (c *singleServer)Receivers() (<-chan Message,<-chan struct{}) {
+	return	c.m_queue, c.r_end
 }
 
-func (c *singleServer)EndSignal() <-chan struct{} {
-	return c.r_end
+
+func (c *singleServer)Close() error {
+	return	nil
 }
 
 

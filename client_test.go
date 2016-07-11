@@ -69,6 +69,19 @@ func packet_received_is(t *testing.T, c net.Conn, expected_pkt Packet) bool {
 	return valid_step(t, pkt.Marshal(), expected_pkt)
 }
 
+
+func packet_received_is_any(t *testing.T, c net.Conn, expected_pkts ...Packet) bool {
+	pkt, err := ReadPacket(c)
+	if err != nil {
+		t.Errorf("got error %+v", err)
+		return false
+	}
+
+	return valid_any_step(t, pkt.Marshal(), expected_pkts...)
+}
+
+
+
 func Test_Client_simple(t *testing.T) {
 	end := make(chan struct{})
 	defer close(end)
