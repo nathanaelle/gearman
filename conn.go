@@ -45,7 +45,9 @@ func NetConn(network,address string) Conn {
 
 func (nc *netConn)Close() error {
 	nc.close = true
-	nc.conn.Close()
+	if nc.conn != nil {
+		return	nc.conn.Close()
+	}
 	return	nil
 }
 
@@ -59,6 +61,7 @@ func (nc *netConn)Redial() {
 	if nc.conn != nil {
 		nc.conn.Close()
 	}
+
 	if !nc.close {
 		nc.conn,err = net.Dial(nc.network, nc.address)
 		if err != nil {
