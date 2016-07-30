@@ -53,7 +53,7 @@ func (tid TaskID)Encode() []byte {
 
 func NewTask(cmd string, payload []byte) Task {
 	r := &task {
-		packet:	packet(SUBMIT_JOB, []byte(cmd), []byte{},payload),
+		packet:	BuildPacket(SUBMIT_JOB, []byte(cmd), []byte{},payload),
 		solved:	new(sync.WaitGroup),
 	}
 

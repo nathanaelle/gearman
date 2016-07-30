@@ -102,7 +102,7 @@ func (p *pool)reconnect(server Conn) {
 	server.Redial()
 
 	for h,_ := range p.handlers {
-		p.pool[server] <- packet(CAN_DO, []byte(h))
+		p.pool[server] <- BuildPacket(CAN_DO, []byte(h))
 	}
 
 	p.s_queue <- Message{ p.pool[server], server, internal_echo_packet }

@@ -4,6 +4,8 @@ import	(
 	"io"
 	"log"
 	"net"
+	"fmt"
+	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 )
@@ -76,7 +78,7 @@ func is_eof(err error) bool {
 func is_timeout(err error) bool {
 	switch	t_err := err.(type) {
 	case net.Error:
-		return	t_err.Timeout() && t_err.Temporary()
+		return	t_err.Timeout()
 	}
 	return false
 }
@@ -127,4 +129,23 @@ func WritePacket(c io.Writer, p Packet) (error) {
 	}
 
 	return nil
+}
+
+
+func	BuildPacket(c Command, data ...[]byte) (p Packet) {
+	var err error
+
+	switch	len(data) {
+	case	0:
+		p,err	= c.Unmarshal([]byte{})
+	case	1:
+		p,err	= c.Unmarshal(data[0])
+	default:
+		p,err	= c.Unmarshal(bytes.Join(data, []byte{ 0 } ))
+	}
+	if err != nil {
+		panic(fmt.Sprintf("%v got %v", c, err))
+	}
+
+	return	p
 }

@@ -114,7 +114,7 @@ func isolated_Serve(job Job, req io.Reader, res, data io.Writer) (status bool, e
 
 func work_data(reply chan<- Packet, tid []byte) io.Writer {
 	return work_writer(func(p []byte) (n int, err error){
-		reply <- packet(WORK_DATA_WRK, tid, p )
+		reply <- BuildPacket(WORK_DATA_WRK, tid, p )
 		return len(p),nil
 	})
 }
@@ -122,7 +122,7 @@ func work_data(reply chan<- Packet, tid []byte) io.Writer {
 
 func work_complete(reply chan<- Packet, tid []byte)  io.Writer {
 	return work_writer(func(p []byte) (n int, err error){
-		reply <- packet(WORK_COMPLETE_WRK, tid, p )
+		reply <- BuildPacket(WORK_COMPLETE_WRK, tid, p )
 		return len(p),nil
 	})
 }
@@ -135,13 +135,13 @@ func run(job Job, input io.Reader, reply chan<- Packet, tid []byte) {
 
 	switch	{
 	case	err == nil && status:
-		reply <- packet(WORK_COMPLETE_WRK, tid, res.Bytes())
+		reply <- BuildPacket(WORK_COMPLETE_WRK, tid, res.Bytes())
 
 	case	err == nil && !status:
-		reply <- packet(WORK_FAIL_WRK, tid)
+		reply <- BuildPacket(WORK_FAIL_WRK, tid)
 
 	case	err != nil:
-		reply <- packet(WORK_EXCEPTION_WRK, tid, []byte(err.Error()))
+		reply <- BuildPacket(WORK_EXCEPTION_WRK, tid, []byte(err.Error()))
 	}
 }
 

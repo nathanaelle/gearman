@@ -2,7 +2,6 @@ package	gearman
 
 import	(
 	"fmt"
-	"bytes"
 )
 
 type	(
@@ -18,6 +17,10 @@ type	(
 		Len()		int
 		//	return the payload at the index i
 		At(int)		[]byte
+
+		//	return the Raw Payload
+		Payload()	[]byte
+
 		//	implements Stringer interface
 		String()	string
 	}
@@ -56,16 +59,6 @@ var	(
 )
 
 
-
-func	packet(c Command, data ...[]byte) Packet {
-	p,err	:= c.Unmarshal(bytes.Join(data, []byte{ 0 } ))
-	if err != nil {
-		panic(fmt.Sprintf("%v got %v", c, err))
-	}
-	return	p
-}
-
-
 func newPkt0size(cmd Command, size int) (Packet,error) {
 	if size != 0 {
 		return	nil, PayloadInEmptyPacketError
@@ -84,12 +77,18 @@ func (pl pkt0size)Cmd() Command {
 }
 
 //	return the number of element in the payload
-func (pl pkt0size)Len() int {
+func (_ pkt0size)Len() int {
 	return	0
 }
 
+
+func (_ pkt0size)Payload() []byte {
+	return	[]byte{}
+}
+
+
 //	return the payload at the index i
-func	(pl pkt0size)At(i int) []byte {
+func	(_ pkt0size)At(_ int) []byte {
 	return	[]byte{}
 }
 
@@ -135,6 +134,11 @@ func (pl pkt1len)Cmd() Command {
 func (pl pkt1len)Len() int {
 	return	1
 }
+
+func (pl pkt1len)Payload() []byte {
+	return	pl.raw
+}
+
 
 //	return the payload at the index i
 func	(pl pkt1len)At(i int) []byte {
@@ -210,6 +214,10 @@ func (pl pktcommon)Size() uint32 {
 //	return the command in the packet
 func (pl pktcommon)Cmd() Command {
 	return	pl.cmd
+}
+
+func (pl pktcommon)Payload() []byte {
+	return	pl.raw
 }
 
 

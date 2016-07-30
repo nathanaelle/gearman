@@ -62,7 +62,7 @@ var valid_packet []packet_test = []packet_test{
 	},
 	{
 		[]byte{0, 0x52, 0x45, 0x53, 0, 0, 0, 0x0b, 0, 0, 0, 0x14, 0x48, 0x3a, 0x6c, 0x61, 0x70, 0x3a, 0x31, 0x00, 0x72, 0x65, 0x76, 0x65, 0x72, 0x73, 0x65, 0x00, 0x74, 0x65, 0x73, 0x74},
-		packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test")),
+		BuildPacket(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test")),
 		nil,
 		3,
 	},
@@ -162,7 +162,7 @@ func BenchmarkMarshalPkt1len(b *testing.B) {
 }
 
 func BenchmarkMarshalPktcommon(b *testing.B) {
-	pkt := packet(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test"))
+	pkt := BuildPacket(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test"))
 	var buff [32]byte
 
 	for n := 0; n < b.N; n++ {
