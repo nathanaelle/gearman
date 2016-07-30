@@ -22,7 +22,7 @@ func trivialWorker(t *testing.T, end chan struct{}, srv ...Conn) {
 	}))
 
 	<-end
-	for _,s := range srv {
+	for _, s := range srv {
 		s.Close()
 	}
 }
@@ -34,12 +34,11 @@ func Test_Worker_simple(t *testing.T) {
 	srv := ConnTest()
 	go trivialWorker(t, end, srv)
 
-
-	if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep ) {
+	if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
 		return
 	}
 
-	if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep ) {
+	if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
 		return
 	}
 
@@ -71,11 +70,11 @@ func Test_Worker_two_servers(t *testing.T) {
 	go trivialWorker(t, end, srv1, srv2)
 
 	for _, srv := range []*testConn{srv1, srv2} {
-		if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep ) {
+		if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
 			return
 		}
 
-		if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep ) {
+		if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
 			return
 		}
 	}
@@ -119,7 +118,6 @@ func Test_Worker_two_servers(t *testing.T) {
 	}
 }
 
-
 func Test_Worker_netcon(t *testing.T) {
 	end := make(chan struct{})
 
@@ -153,11 +151,11 @@ func Test_Worker_netcon(t *testing.T) {
 			go func(c net.Conn) {
 				defer c.Close()
 
-				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, []byte("reverse")),pre_sleep) {
+				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
 					return
 				}
 
-				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, []byte("reverse")),pre_sleep) {
+				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
 					return
 				}
 

@@ -47,11 +47,9 @@ func (nc *testConn) String() string {
 func (nc *testConn) Redial() {
 }
 
-
 func (nc *testConn) Close() error {
 	return nil
 }
-
 
 func (nc *testConn) Read(b []byte) (int, error) {
 	nc.Lock()
