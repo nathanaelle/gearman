@@ -18,6 +18,9 @@ type	(
 
 
 func	client_loop(c Client, dbg *log.Logger) {
+	var tid TaskID
+	var err	error
+
 	m_q,end	:= c.Receivers()
 
 	for	{
@@ -28,30 +31,27 @@ func	client_loop(c Client, dbg *log.Logger) {
 			case	NOOP:
 
 			case	ECHO_RES:
-				debug(dbg, "CLI\tECHO [%s]\n",string(msg.Pkt.At(0)))
+				debug(dbg, "CLI\tECHO [%s]\n", string(msg.Pkt.At(0).Bytes()) )
 
 			case	ERROR:
-				debug(dbg, "CLI\tERR [%s] [%s]\n",msg.Pkt.At(0),string(msg.Pkt.At(1)))
+				debug(dbg, "CLI\tERR [%s] [%s]\n",msg.Pkt.At(0).Bytes(),string(msg.Pkt.At(1).Bytes()))
 
 			case	JOB_CREATED:
-				tid,err	:= slice2TaskID(msg.Pkt.At(0))
-				if err != nil {
+				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
 					panic(err)
 				}
 				c.AssignTask(tid)
 
 
 			case	WORK_DATA, WORK_WARNING, WORK_STATUS:
-				tid,err	:= slice2TaskID(msg.Pkt.At(0))
-				if err != nil {
+				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
 					panic(err)
 				}
 
 				c.GetTask(tid).Handle(msg.Pkt)
 
 			case	WORK_COMPLETE, WORK_FAIL, WORK_EXCEPTION:
-				tid,err	:= slice2TaskID(msg.Pkt.At(0))
-				if err != nil {
+				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
 					panic(err)
 				}
 

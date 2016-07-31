@@ -112,41 +112,44 @@ func isolated_Serve(job Job, req io.Reader, res, data io.Writer) (status bool, e
 }
 
 
-func work_data(reply chan<- Packet, tid []byte) io.Writer {
+func work_data(reply chan<- Packet, tid TaskID) io.Writer {
 	return work_writer(func(p []byte) (n int, err error){
-		reply <- BuildPacket(WORK_DATA_WRK, tid, p )
+		reply <- BuildPacket(WORK_DATA_WRK, tid, Opacify(p))
 		return len(p),nil
 	})
 }
 
 
-func work_complete(reply chan<- Packet, tid []byte)  io.Writer {
+func work_complete(reply chan<- Packet, tid TaskID)  io.Writer {
 	return work_writer(func(p []byte) (n int, err error){
-		reply <- BuildPacket(WORK_COMPLETE_WRK, tid, p )
+		reply <- BuildPacket(WORK_COMPLETE_WRK, tid, Opacify(p))
 		return len(p),nil
 	})
 }
 
 
 
-func run(job Job, input io.Reader, reply chan<- Packet, tid []byte) {
+func run(job Job, input io.Reader, reply chan<- Packet, tid TaskID) {
 	res	:= new(bytes.Buffer)
 	status, err := isolated_Serve( job, input, res, work_data(reply, tid) )
 
 	switch	{
 	case	err == nil && status:
-		reply <- BuildPacket(WORK_COMPLETE_WRK, tid, res.Bytes())
+		reply <- BuildPacket(WORK_COMPLETE_WRK, tid, Opacify(res.Bytes()))
 
 	case	err == nil && !status:
 		reply <- BuildPacket(WORK_FAIL_WRK, tid)
 
 	case	err != nil:
-		reply <- BuildPacket(WORK_EXCEPTION_WRK, tid, []byte(err.Error()))
+		reply <- BuildPacket(WORK_EXCEPTION_WRK, tid, Opacify([]byte(err.Error())))
 	}
 }
 
 
 func	worker_loop(w Worker,dbg *log.Logger) {
+	var tid TaskID
+	var err error
+
 	m_q,end	:= w.Receivers()
 
 	for	{
@@ -167,14 +170,20 @@ func	worker_loop(w Worker,dbg *log.Logger) {
 
 			case	JOB_ASSIGN:
 				msg.Server.CounterAdd(-1)
-				go run(w.GetHandler(string(msg.Pkt.At(1))), bytes.NewReader(msg.Pkt.At(2)), msg.Reply, msg.Pkt.At(0))
+				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
+					panic(err)
+				}
+				go run(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
 
 			case	JOB_ASSIGN_UNIQ:
 				msg.Server.CounterAdd(-1)
-				go run(w.GetHandler(string(msg.Pkt.At(1))), bytes.NewReader(msg.Pkt.At(2)), msg.Reply, msg.Pkt.At(0))
+				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
+					panic(err)
+				}
+				go run(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
 
 			case	ERROR:
-				debug(dbg, "WRKR\tERR\t[%s] [%s]\n", msg.Pkt.At(0), string(msg.Pkt.At(1)))
+				debug(dbg, "WRKR\tERR\t[%s] [%s]\n", msg.Pkt.At(0).Bytes(), string(msg.Pkt.At(1).Bytes()))
 			default:
 				debug(dbg, "WRKR\t%s\n", msg.Pkt)
 			}

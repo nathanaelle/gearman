@@ -4,14 +4,11 @@ import	(
 	"io"
 	"sync"
 	"bytes"
-	"errors"
 )
 
 
 
 type	(
-	TaskID	[64]byte
-
 	Task	interface {
 		Handle(p Packet)
 		Value() ([]byte,error)
@@ -33,27 +30,11 @@ type	(
 var	NilTask	Task	= &nullTask{}
 
 
-func	slice2TaskID(d []byte) (tid TaskID, err error) {
-	if len(d) > 64 {
-		err = errors.New("tid too long")
-		return
-	}
-
-	copy(tid[:], d)
-	return
-}
-
-
-func (tid TaskID)Encode() []byte {
-	v := [64]byte(tid)
-	return	v[:]
-}
-
 
 
 func NewTask(cmd string, payload []byte) Task {
 	r := &task {
-		packet:	BuildPacket(SUBMIT_JOB, []byte(cmd), []byte{},payload),
+		packet:	BuildPacket(SUBMIT_JOB, Opacify([]byte(cmd)), Opacify([]byte{}), Opacify(payload)),
 		solved:	new(sync.WaitGroup),
 	}
 
@@ -70,7 +51,7 @@ func (r *task) Packet() Packet {
 func (r *task) Handle(p Packet) {
 	switch p.Cmd() {
 	case	WORK_COMPLETE:
-		r.payload.Write(p.At(1))
+		r.payload.Write(p.At(1).Bytes())
 		r.solved.Done()
 
 	case	WORK_FAIL:
@@ -78,7 +59,7 @@ func (r *task) Handle(p Packet) {
 		r.solved.Done()
 
 	case	WORK_EXCEPTION:
-		r.err = &ExceptionError { p.At(1) }
+		r.err = &ExceptionError { p.At(1).Bytes() }
 		r.solved.Done()
 	}
 }

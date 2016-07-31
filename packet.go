@@ -16,7 +16,7 @@ type	(
 		//	return the number of element in the payload
 		Len()		int
 		//	return the payload at the index i
-		At(int)		[]byte
+		At(int)		Opaque
 
 		//	return the Raw Payload
 		Payload()	[]byte
@@ -88,8 +88,8 @@ func (_ pkt0size)Payload() []byte {
 
 
 //	return the payload at the index i
-func	(_ pkt0size)At(_ int) []byte {
-	return	[]byte{}
+func	(_ pkt0size)At(_ int) Opaque {
+	return	empty_opaque
 }
 
 //	implements Stringer interface
@@ -141,10 +141,10 @@ func (pl pkt1len)Payload() []byte {
 
 
 //	return the payload at the index i
-func	(pl pkt1len)At(i int) []byte {
+func	(pl pkt1len)At(i int) Opaque {
 	switch i {
-	case	0:	return	pl.raw
-	default:	return	[]byte{}
+	case	0:	return	Opacify(pl.raw)
+	default:	return	empty_opaque
 	}
 }
 
@@ -231,12 +231,12 @@ func (pl pktcommon)Len() int {
 }
 
 
-func	(pl pktcommon)At(i int) []byte {
+func	(pl pktcommon)At(i int) Opaque {
 	switch {
-	case	i < 0:			return	[]byte{}
-	case	i+1 >= len(pl.idx):	return	[]byte{}
-	case	i == 0:			return	pl.raw[pl.idx[0]:pl.idx[1]]
-	default:			return	pl.raw[pl.idx[i]+1:pl.idx[i+1]]
+	case	i < 0:			return	empty_opaque
+	case	i+1 >= len(pl.idx):	return	empty_opaque
+	case	i == 0:			return	Opacify(pl.raw[pl.idx[0]:pl.idx[1]])
+	default:			return	Opacify(pl.raw[pl.idx[i]+1:pl.idx[i+1]])
 	}
 }
 

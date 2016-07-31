@@ -37,7 +37,7 @@ func (e *ExceptionError)Error() string {
 }
 
 func (e *PayloadLenError)Error() string {
-	return	fmt.Sprintf("[%d] itemps Required for [%v] payload but got [%v] items", e.ExpectedLen, e.Cmd, e.GivenLen)
+	return	fmt.Sprintf("[%d] items Required for [%v] payload but got [%v] items", e.ExpectedLen, e.Cmd, e.GivenLen)
 }
 
 func (e *UndefinedPacketError)Error() string {

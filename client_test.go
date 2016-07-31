@@ -91,11 +91,11 @@ func Test_Client_simple(t *testing.T) {
 
 	r := cli.Submit(NewTask("reverse", []byte("test")))
 
-	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test"))) {
+	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test")))) {
 		return
 	}
-	srv.Send(BuildPacket(JOB_CREATED, []byte("H:lap:1")))
-	srv.Send(BuildPacket(WORK_COMPLETE, []byte("H:lap:1"), []byte("tset")))
+	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:1"))))
+	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:1")), Opacify([]byte("tset"))))
 
 	if !valid_result(t, []byte("tset"), nil)(r.Value()) {
 		return
@@ -116,23 +116,23 @@ func Test_Client_unordered_result(t *testing.T) {
 	r2 := cli.Submit(NewTask("reverse", []byte("test 2")))
 	r3 := cli.Submit(NewTask("reverse", []byte("test 3")))
 
-	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test 1"))) {
+	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 1")))) {
 		return
 	}
-	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test 2"))) {
+	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 2")))) {
 		return
 	}
-	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, []byte("reverse"), []byte(""), []byte("test 3"))) {
+	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 3")))) {
 		return
 	}
 
-	srv.Send(BuildPacket(JOB_CREATED, []byte("H:lap:1")))
-	srv.Send(BuildPacket(JOB_CREATED, []byte("H:lap:2")))
-	srv.Send(BuildPacket(JOB_CREATED, []byte("H:lap:3")))
+	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:1"))))
+	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:2"))))
+	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:3"))))
 
-	srv.Send(BuildPacket(WORK_COMPLETE, []byte("H:lap:2"), []byte("2 tset")))
-	srv.Send(BuildPacket(WORK_COMPLETE, []byte("H:lap:3"), []byte("3 tset")))
-	srv.Send(BuildPacket(WORK_COMPLETE, []byte("H:lap:1"), []byte("1 tset")))
+	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:2")), Opacify([]byte("2 tset"))))
+	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:3")), Opacify([]byte("3 tset"))))
+	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:1")), Opacify([]byte("1 tset"))))
 
 	if !valid_result(t, []byte("2 tset"), nil)(r2.Value()) {
 		return

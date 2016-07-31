@@ -5,7 +5,6 @@ import	(
 	"log"
 	"net"
 	"fmt"
-	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 )
@@ -132,19 +131,43 @@ func WritePacket(c io.Writer, p Packet) (error) {
 }
 
 
-func	BuildPacket(c Command, data ...[]byte) (p Packet) {
+func	BuildPacket(c Command, data ...MarshalerGearman) (p Packet) {
 	var err error
 
 	switch	len(data) {
 	case	0:
 		p,err	= c.Unmarshal([]byte{})
+
 	case	1:
-		p,err	= c.Unmarshal(data[0])
+		b,err := data[0].MarshalGearman()
+		if err != nil {
+			panic(fmt.Sprintf("%v got %v", c, err))
+		}
+
+		p,err	= c.Unmarshal(b)
+
+
 	default:
-		p,err	= c.Unmarshal(bytes.Join(data, []byte{ 0 } ))
+		l := len(data)-1
+		for _,d := range data {
+			l += d.Len()
+		}
+
+		ret := make([]byte,l)
+		l = 0
+		for _,d := range data {
+			b,err := d.MarshalGearman()
+			if err != nil {
+				panic(fmt.Sprintf("%v got %v", c, err))
+			}
+			copy(ret[l:], b[:])
+			l += d.Len()+1
+		}
+
+		p,err	= c.Unmarshal(ret)
 	}
 	if err != nil {
-		panic(fmt.Sprintf("%v got %v", c, err))
+		panic(fmt.Sprintf("%v : %v", c, err))
 	}
 
 	return	p

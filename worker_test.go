@@ -34,11 +34,11 @@ func Test_Worker_simple(t *testing.T) {
 	srv := ConnTest()
 	go trivialWorker(t, end, srv)
 
-	if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
+	if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
 		return
 	}
 
-	if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
+	if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
 		return
 	}
 
@@ -52,11 +52,11 @@ func Test_Worker_simple(t *testing.T) {
 	}
 
 	srv.Send(no_job)
-	srv.Send(BuildPacket(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test")))
+	srv.Send(BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test"))))
 	if !valid_step(t, srv.Received(), pre_sleep) {
 		return
 	}
-	if !valid_step(t, srv.Received(), BuildPacket(WORK_COMPLETE_WRK, []byte("H:lap:1"), []byte("tset"))) {
+	if !valid_step(t, srv.Received(), BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("tset")))) {
 		return
 	}
 }
@@ -70,11 +70,11 @@ func Test_Worker_two_servers(t *testing.T) {
 	go trivialWorker(t, end, srv1, srv2)
 
 	for _, srv := range []*testConn{srv1, srv2} {
-		if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
+		if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
 			return
 		}
 
-		if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
+		if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
 			return
 		}
 	}
@@ -94,26 +94,26 @@ func Test_Worker_two_servers(t *testing.T) {
 	srv1.Send(no_job)
 	srv2.Send(no_job)
 
-	srv1.Send(BuildPacket(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test srv1")))
-	srv2.Send(BuildPacket(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test srv2")))
+	srv1.Send(BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test srv1"))))
+	srv2.Send(BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test srv2"))))
 
 	rec := srv1.Received()
-	if !valid_any_step(t, rec, pre_sleep, BuildPacket(WORK_COMPLETE_WRK, []byte("H:lap:1"), []byte("1vrs tset"))) {
+	if !valid_any_step(t, rec, pre_sleep, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("1vrs tset")))) {
 		return
 	}
 
 	rec = srv1.Received()
-	if !valid_any_step(t, rec, pre_sleep, BuildPacket(WORK_COMPLETE_WRK, []byte("H:lap:1"), []byte("1vrs tset"))) {
+	if !valid_any_step(t, rec, pre_sleep, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("1vrs tset")))) {
 		return
 	}
 
 	rec = srv2.Received()
-	if !valid_any_step(t, rec, pre_sleep, BuildPacket(WORK_COMPLETE_WRK, []byte("H:lap:1"), []byte("2vrs tset"))) {
+	if !valid_any_step(t, rec, pre_sleep, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("2vrs tset")))) {
 		return
 	}
 
 	rec = srv2.Received()
-	if !valid_any_step(t, rec, pre_sleep, BuildPacket(WORK_COMPLETE_WRK, []byte("H:lap:1"), []byte("2vrs tset"))) {
+	if !valid_any_step(t, rec, pre_sleep, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("2vrs tset")))) {
 		return
 	}
 }
@@ -151,11 +151,11 @@ func Test_Worker_netcon(t *testing.T) {
 			go func(c net.Conn) {
 				defer c.Close()
 
-				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
+				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
 					return
 				}
 
-				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, []byte("reverse")), pre_sleep) {
+				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
 					return
 				}
 
@@ -170,13 +170,13 @@ func Test_Worker_netcon(t *testing.T) {
 				}
 
 				WritePacket(c, no_job)
-				WritePacket(c, BuildPacket(JOB_ASSIGN, []byte("H:lap:1"), []byte("reverse"), []byte("test")))
+				WritePacket(c, BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test"))))
 
 				if !packet_received_is(t, c, pre_sleep) {
 					return
 				}
 
-				if !packet_received_is(t, c, BuildPacket(WORK_COMPLETE_WRK, []byte("H:lap:1"), []byte("tset"))) {
+				if !packet_received_is(t, c, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("tset")))) {
 					return
 				}
 			}(conn)

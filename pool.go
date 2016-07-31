@@ -78,7 +78,7 @@ func (p *pool)add_handler(h string) error {
 	}
 	p.handlers[h] = 0
 
-	can_do,_:= newPkt1len(CAN_DO, []byte(h))
+	can_do := BuildPacket(CAN_DO, Opacify([]byte(h)))
 	for _,server := range p.pool {
 		server <- can_do
 	}
@@ -102,7 +102,7 @@ func (p *pool)reconnect(server Conn) {
 	server.Redial()
 
 	for h,_ := range p.handlers {
-		p.pool[server] <- BuildPacket(CAN_DO, []byte(h))
+		p.pool[server] <- BuildPacket(CAN_DO, Opacify([]byte(h)))
 	}
 
 	p.s_queue <- Message{ p.pool[server], server, internal_echo_packet }
