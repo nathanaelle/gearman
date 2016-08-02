@@ -2,6 +2,7 @@ package	gearman // import "github.com/nathanaelle/gearman"
 
 import	(
 	"errors"
+	"encoding/base64"
 )
 
 
@@ -24,7 +25,7 @@ type	(
 
 	TaskID		[64]byte
 
-	Function	string
+	Function	[]byte
 	ClientId	[]byte
 
 
@@ -125,20 +126,22 @@ func (tid *TaskID)UnmarshalGearman(d []byte) error {
 	return	nil
 }
 
-
 func (fn *Function)UnmarshalGearman(d []byte) error {
-	*fn = Function(string(d))
+	*fn = Function(d)
 	return	nil
 }
 
 func (fn Function)MarshalGearman() ([]byte,error) {
-	return []byte(fn), nil
+	return fn, nil
 }
 
 func (fn Function)Len() int {
-	return	len([]byte(string(fn)))
+	return	len(fn)
 }
 
+func (fn Function)String() string {
+	return	base64.RawURLEncoding.EncodeToString([]byte(fn))
+}
 
 func (clid *ClientId)UnmarshalGearman(d []byte) error {
 	*clid = d
