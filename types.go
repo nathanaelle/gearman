@@ -1,6 +1,7 @@
 package	gearman // import "github.com/nathanaelle/gearman"
 
 import	(
+	"bytes"
 	"errors"
 	"encoding/base64"
 )
@@ -141,6 +142,10 @@ func (fn Function)Len() int {
 
 func (fn Function)String() string {
 	return	base64.RawURLEncoding.EncodeToString([]byte(fn))
+}
+
+func (f1 Function)IsEqual(f2 Function) bool {
+	return	bytes.Equal(f1, f2)
 }
 
 func (clid *ClientId)UnmarshalGearman(d []byte) error {
