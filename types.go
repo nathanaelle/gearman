@@ -15,12 +15,12 @@ type	(
 
 	UnmarshalerGearman interface {
 		UnmarshalGearman([]byte) error
+		Cast(Opaque) error
 	}
 
 	Opaque		interface {
 		MarshalerGearman
 		UnmarshalerGearman
-		Cast(UnmarshalerGearman) error
 		Bytes()	[]byte
 	}
 
@@ -36,7 +36,7 @@ type	(
 )
 
 var empty_opaque	*opaque0size = &opaque0size{}
-
+var CastOpaqueAsOpaqueError	error	= errors.New("Can't cast Opaque as Opaque")
 
 
 func Opacify(b []byte) Opaque {
@@ -66,10 +66,11 @@ func (o *opaque)Len() int {
 	return	len(o.Bytes())
 }
 
-
-func (o *opaque)Cast(um UnmarshalerGearman) error {
-	return	um.UnmarshalGearman([]byte(*o))
+func (fn *opaque)Cast(o Opaque) error {
+	return	CastOpaqueAsOpaqueError
 }
+
+
 
 
 func (_ *opaque0size)UnmarshalGearman(d []byte) error {
@@ -91,8 +92,9 @@ func (_ *opaque0size)Len() int {
 	return	0
 }
 
-func (_ *opaque0size)Cast(um UnmarshalerGearman) error {
-	return	um.UnmarshalGearman([]byte{})
+
+func (fn *opaque0size)Cast(o Opaque) error {
+	return	CastOpaqueAsOpaqueError
 }
 
 
@@ -102,9 +104,14 @@ func (tid TaskID)MarshalGearman() ([]byte,error) {
 	return	tid[0:tid.Len()],nil
 }
 
+func (tid *TaskID)Cast(o Opaque) error {
+	return	tid.UnmarshalGearman(o.Bytes())
+}
+
+
 func (tid TaskID)Len() int {
 	end := 63
-	for tid[end] == 0 {
+	for end > -1 && tid[end] == 0 {
 		end--
 	}
 
@@ -132,6 +139,10 @@ func (fn *Function)UnmarshalGearman(d []byte) error {
 	return	nil
 }
 
+func (fn *Function)Cast(o Opaque) error {
+	return	fn.UnmarshalGearman(o.Bytes())
+}
+
 func (fn Function)MarshalGearman() ([]byte,error) {
 	return fn, nil
 }
@@ -152,6 +163,11 @@ func (clid *ClientId)UnmarshalGearman(d []byte) error {
 	*clid = d
 	return	nil
 }
+
+func (clid *ClientId)Cast(o Opaque) error {
+	return	clid.UnmarshalGearman(o.Bytes())
+}
+
 
 func (clid ClientId)MarshalGearman() ([]byte,error) {
 	return clid, nil

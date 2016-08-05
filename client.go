@@ -37,21 +37,21 @@ func	client_loop(c Client, dbg *log.Logger) {
 				debug(dbg, "CLI\tERR [%s] [%s]\n",msg.Pkt.At(0).Bytes(),string(msg.Pkt.At(1).Bytes()))
 
 			case	JOB_CREATED:
-				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
+				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					panic(err)
 				}
 				c.AssignTask(tid)
 
 
 			case	WORK_DATA, WORK_WARNING, WORK_STATUS:
-				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
+				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					panic(err)
 				}
 
 				c.GetTask(tid).Handle(msg.Pkt)
 
 			case	WORK_COMPLETE, WORK_FAIL, WORK_EXCEPTION:
-				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
+				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					panic(err)
 				}
 

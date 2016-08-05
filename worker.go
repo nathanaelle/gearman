@@ -170,14 +170,14 @@ func	worker_loop(w Worker,dbg *log.Logger) {
 
 			case	JOB_ASSIGN:
 				msg.Server.CounterAdd(-1)
-				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
+				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					panic(err)
 				}
 				go run(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
 
 			case	JOB_ASSIGN_UNIQ:
 				msg.Server.CounterAdd(-1)
-				if err = msg.Pkt.At(0).Cast(&tid); err != nil {
+				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					panic(err)
 				}
 				go run(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
