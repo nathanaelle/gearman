@@ -15,6 +15,12 @@ func Test_Opaque(t *testing.T) {
 		return
 	}
 
+	err = opaque_test([]byte("hello"))
+	if err != nil {
+		t.Errorf("got error %+v", err)
+		return
+	}
+
 }
 
 func opaque_test(data []byte) error {
