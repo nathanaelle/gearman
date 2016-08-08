@@ -24,7 +24,8 @@ type	(
 		Bytes()	[]byte
 	}
 
-	TaskID		[64]byte
+	TaskID		[]byte
+	TaskMapID	[64]byte
 
 	Function	[]byte
 	ClientId	[]byte
@@ -54,21 +55,22 @@ func (o *opaque)UnmarshalGearman(d []byte) error {
 	return	nil
 }
 
-func (o *opaque)MarshalGearman() ([]byte,error) {
-	return o.Bytes(), nil
-}
-
-func (o *opaque)Bytes()	[]byte {
-	return	[]byte(*o)
-}
-
-func (o *opaque)Len() int {
-	return	len(o.Bytes())
-}
-
 func (fn *opaque)Cast(o Opaque) error {
 	return	CastOpaqueAsOpaqueError
 }
+
+func (o opaque)MarshalGearman() ([]byte,error) {
+	return o.Bytes(), nil
+}
+
+func (o opaque)Bytes()	[]byte {
+	return	[]byte(o)
+}
+
+func (o opaque)Len() int {
+	return	len(o.Bytes())
+}
+
 
 
 
@@ -80,59 +82,54 @@ func (_ *opaque0size)UnmarshalGearman(d []byte) error {
 	return	nil
 }
 
-func (_ *opaque0size)MarshalGearman() ([]byte,error) {
-	return []byte{}, nil
-}
-
-func (_ *opaque0size)Bytes() []byte {
-	return []byte{}
-}
-
-func (_ *opaque0size)Len() int {
-	return	0
-}
-
-
 func (fn *opaque0size)Cast(o Opaque) error {
 	return	CastOpaqueAsOpaqueError
 }
 
-
-
-
-func (tid TaskID)MarshalGearman() ([]byte,error) {
-	return	tid[0:tid.Len()],nil
+func (_ opaque0size)MarshalGearman() ([]byte,error) {
+	return []byte{}, nil
 }
+
+func (_ opaque0size)Bytes() []byte {
+	return []byte{}
+}
+
+func (_ opaque0size)Len() int {
+	return	0
+}
+
+
+
+
 
 func (tid *TaskID)Cast(o Opaque) error {
 	return	tid.UnmarshalGearman(o.Bytes())
 }
 
-
-func (tid TaskID)Len() int {
-	end := 63
-	for end > -1 && tid[end] == 0 {
-		end--
-	}
-
-	return end+1
-}
-
-
 func (tid *TaskID)UnmarshalGearman(d []byte) error {
 	if len(d) > 64 {
-		return	errors.New("tid too long")
+		return	errors.New("too Long TaskID")
 	}
-
-	for _,v := range d {
-		if v == 0 {
-			return errors.New("invalid TaskID")
-		}
-	}
-
-	copy(tid[0:len(d)], d[:])
+	*tid = TaskID(d)
 	return	nil
 }
+
+func (tid TaskID)MarshalGearman() ([]byte,error) {
+	if len([]byte(tid)) > 64 {
+		return nil, errors.New("too Long TaskID")
+	}
+	return	[]byte(tid),nil
+}
+
+func (tid TaskID)Len() int {
+	return	len([]byte(tid))
+}
+
+func (tid TaskID)String() string {
+	return	base64.RawURLEncoding.EncodeToString([]byte(tid))
+}
+
+
 
 func (fn *Function)UnmarshalGearman(d []byte) error {
 	*fn = Function(d)
@@ -144,11 +141,11 @@ func (fn *Function)Cast(o Opaque) error {
 }
 
 func (fn Function)MarshalGearman() ([]byte,error) {
-	return fn, nil
+	return []byte(fn), nil
 }
 
 func (fn Function)Len() int {
-	return	len(fn)
+	return	len([]byte(fn))
 }
 
 func (fn Function)String() string {
@@ -170,7 +167,7 @@ func (clid *ClientId)Cast(o Opaque) error {
 
 
 func (clid ClientId)MarshalGearman() ([]byte,error) {
-	return clid, nil
+	return []byte(clid), nil
 }
 
 func (clid ClientId)Len() int {

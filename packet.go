@@ -67,44 +67,44 @@ func newPkt0size(cmd Command, size int) (Packet,error) {
 }
 
 //	return the size in bytes of a packet with no payload
-func (pl pkt0size)Size() uint32 {
+func (pl *pkt0size)Size() uint32 {
 	return	0
 }
 
 //	return the command in the packet
-func (pl pkt0size)Cmd() Command {
+func (pl *pkt0size)Cmd() Command {
 	return	pl.cmd
 }
 
 //	return the number of element in the payload
-func (_ pkt0size)Len() int {
+func (_ *pkt0size)Len() int {
 	return	0
 }
 
 
-func (_ pkt0size)Payload() []byte {
+func (_ *pkt0size)Payload() []byte {
 	return	[]byte{}
 }
 
 
 //	return the payload at the index i
-func	(_ pkt0size)At(_ int) Opaque {
+func (_ *pkt0size)At(_ int) Opaque {
 	return	empty_opaque
 }
 
 //	implements Stringer interface
-func (pl pkt0size)String() string {
+func (pl *pkt0size)String() string {
 	return	fmt.Sprintf("%v SIZE=0 PLSIZE=0", pl.cmd)
 }
 
-func (pl pkt0size)Marshal() []byte {
+func (pl *pkt0size)Marshal() []byte {
 	buff	:= make([]byte,12)
 	pl.Encode(buff)
 	return	buff
 }
 
 
-func (pl pkt0size)Encode(buff []byte) (int,error) {
+func (pl *pkt0size)Encode(buff []byte) (int,error) {
 	if len(buff) < 12 {
 		return	0, BuffTooSmallError
 	}
@@ -121,27 +121,27 @@ func newPkt1len(cmd Command, payload []byte) (Packet,error) {
 }
 
 //	return the size in bytes of the payload
-func (pl pkt1len)Size() uint32 {
+func (pl *pkt1len)Size() uint32 {
 	return	pl.size
 }
 
 //	return the command in the packet
-func (pl pkt1len)Cmd() Command {
+func (pl *pkt1len)Cmd() Command {
 	return	pl.cmd
 }
 
 //	return the number of element in the payload
-func (pl pkt1len)Len() int {
+func (pl *pkt1len)Len() int {
 	return	1
 }
 
-func (pl pkt1len)Payload() []byte {
+func (pl *pkt1len)Payload() []byte {
 	return	pl.raw
 }
 
 
 //	return the payload at the index i
-func	(pl pkt1len)At(i int) Opaque {
+func	(pl *pkt1len)At(i int) Opaque {
 	switch i {
 	case	0:	return	Opacify(pl.raw)
 	default:	return	empty_opaque
@@ -149,19 +149,19 @@ func	(pl pkt1len)At(i int) Opaque {
 }
 
 //	implements Stringer interface
-func (pl pkt1len)String() string {
+func (pl *pkt1len)String() string {
 	return	fmt.Sprintf("%v SIZE=%2d PLSIZE=1", pl.cmd, pl.size)
 }
 
 
-func (pl pkt1len)Marshal() []byte {
+func (pl *pkt1len)Marshal() []byte {
 	buff	:= make([]byte,pl.size+12)
 	pl.Encode(buff)
 	return	buff
 }
 
 
-func (pl pkt1len)Encode(buff []byte) (int,error) {
+func (pl *pkt1len)Encode(buff []byte) (int,error) {
 	if len(buff) < int(pl.size+12) {
 		return	0, BuffTooSmallError
 	}
@@ -207,22 +207,22 @@ func newPktnlen(cmd Command, payload []byte, expected_len int) (Packet,error) {
 }
 
 //	return the size in bytes of the payload
-func (pl pktcommon)Size() uint32 {
+func (pl *pktcommon)Size() uint32 {
 	return	pl.size
 }
 
 //	return the command in the packet
-func (pl pktcommon)Cmd() Command {
+func (pl *pktcommon)Cmd() Command {
 	return	pl.cmd
 }
 
-func (pl pktcommon)Payload() []byte {
+func (pl *pktcommon)Payload() []byte {
 	return	pl.raw
 }
 
 
 //	return the number of element in the payload
-func (pl pktcommon)Len() int {
+func (pl *pktcommon)Len() int {
 	if len(pl.idx) < 2 {
 		return 0
 	}
@@ -231,7 +231,7 @@ func (pl pktcommon)Len() int {
 }
 
 
-func	(pl pktcommon)At(i int) Opaque {
+func (pl *pktcommon)At(i int) Opaque {
 	switch {
 	case	i < 0:			return	empty_opaque
 	case	i+1 >= len(pl.idx):	return	empty_opaque
@@ -241,19 +241,19 @@ func	(pl pktcommon)At(i int) Opaque {
 }
 
 
-func (pl pktcommon)String() string {
+func (pl *pktcommon)String() string {
 	return	fmt.Sprintf("%v SIZE=%d PLSIZE=%d", pl.cmd, pl.size, pl.Len())
 }
 
 
-func (pl pktcommon)Marshal() []byte {
+func (pl *pktcommon)Marshal() []byte {
 	buff	:= make([]byte,pl.size+12)
 	pl.Encode(buff)
 	return	buff
 }
 
 
-func (pl pktcommon)Encode(buff []byte) (int,error) {
+func (pl *pktcommon)Encode(buff []byte) (int,error) {
 	if len(buff) < int(pl.size+12) {
 		return	0, BuffTooSmallError
 	}

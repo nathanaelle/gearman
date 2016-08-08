@@ -8,7 +8,7 @@ type	(
 	singleServer	struct {
 		configured	bool
 		pool
-		jobs		map[TaskID]Task
+		jobs		map[string]Task
 		m_queue		chan Message
 		r_q		[]Task
 	}
@@ -20,7 +20,7 @@ type	(
 func SingleServerClient(r_end <-chan struct{}, debug *log.Logger) Client {
 	c		:= new(singleServer)
 	c.m_queue	= make(chan Message,10)
-	c.jobs		= make(map[TaskID]Task)
+	c.jobs		= make(map[string]Task)
 	c.pool.new(c.m_queue, r_end)
 
 	go client_loop(c,debug)
@@ -70,13 +70,13 @@ func (c *singleServer)Submit(req Task) Task {
 
 
 func (c *singleServer)AssignTask(tid TaskID) {
-	c.jobs[tid]	= c.r_q[0]
-	c.r_q		= c.r_q[1:]
+	c.jobs[tid.String()]	= c.r_q[0]
+	c.r_q			= c.r_q[1:]
 }
 
 
 func (c *singleServer)GetTask(tid TaskID) Task {
-	if res,ok := c.jobs[tid]; ok {
+	if res,ok := c.jobs[tid.String()]; ok {
 		return	res
 	}
 	return	NilTask
@@ -84,8 +84,9 @@ func (c *singleServer)GetTask(tid TaskID) Task {
 
 
 func (c *singleServer)ExtractTask(tid TaskID) Task {
-	if res,ok := c.jobs[tid]; ok {
-		delete(c.jobs, tid)
+	s_tid := tid.String()
+	if res,ok := c.jobs[s_tid]; ok {
+		delete(c.jobs, s_tid)
 		return	res
 	}
 	return	NilTask

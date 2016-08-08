@@ -24,6 +24,15 @@ type	(
 	}
 
 	nullTask struct{}
+
+	echoTask	struct {
+		packet		Packet
+		solved		*sync.WaitGroup
+		payload		bytes.Buffer
+		err		error
+	}
+
+
 )
 
 
@@ -94,4 +103,47 @@ func (_ *nullTask) Packet() Packet {
 
 func (_ *nullTask) Reader() (io.Reader,error) {
 	return bytes.NewReader( []byte{} ), nil
+}
+
+
+
+func EchoTask(payload []byte) Task {
+	r := &echoTask {
+		packet:	BuildPacket(ECHO_REQ, Opacify(payload)),
+		solved:	new(sync.WaitGroup),
+	}
+
+	r.solved.Add(1)
+	return	r
+}
+
+
+func (r *echoTask) Handle(p Packet) {
+	switch p.Cmd() {
+	case	ECHO_RES:
+		r.payload.Write(p.At(0).Bytes())
+		r.solved.Done()
+
+	default:
+		r.err = unknownError
+		r.solved.Done()
+	}
+}
+
+
+func (r *echoTask) Value() ([]byte,error) {
+	r.solved.Wait()
+
+	return r.payload.Bytes(), r.err
+}
+
+func (r *echoTask) Packet() Packet {
+	return r.packet
+}
+
+
+func (r *echoTask) Reader() (io.Reader,error) {
+	r.solved.Wait()
+
+	return bytes.NewReader( r.payload.Bytes() ), r.err
 }
