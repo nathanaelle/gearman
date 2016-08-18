@@ -95,7 +95,6 @@ func ReadPacket(c io.Reader) (Packet,error) {
 		return nil,TextProtocolError
 	}
 
-	//h	:= Hello(be2uint32(header[0:4]))
 	cmd	:= Command(be2uint64(header[0:8]))
 	size	:= be2uint32(header[8:12])
 

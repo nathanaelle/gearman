@@ -45,7 +45,7 @@ func (p *pool)add_server(server Conn) error {
 		return errors.New("server already exists: "+server.String())
 	}
 
-	p.pool[server]=make(chan Packet,10)
+	p.pool[server]=make(chan Packet,100)
 	p.Unlock()
 
 	go p.wloop(server,p.pool[server])
