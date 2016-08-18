@@ -25,12 +25,21 @@ w.AddHandler("reverse", gearman.JobHandler(func(payload io.Reader,reply io.Write
 <-end
 ```
 
+## Protocol
+
+The protocol implemented is now  https://github.com/gearman/gearmand/blob/master/PROTOCOL
+
+There are some variant :
+
+  * Binary only protocol
+
 
 ## Features
 
   * [x] Worker Support
   * [x] Client Support
-  * [x] Async Task with promise
+  * [x] Access To Raw Packets
+  * [x] Async Client Task with promise
   * [x] Multi server Worker
   * [ ] Multi server Client
 
