@@ -12,6 +12,8 @@ type	(
 	Worker	interface {
 		AddServers(...Conn) Worker
 		AddHandler(string, Job) Worker
+		DelHandler(string) Worker
+		DelAllHandlers() Worker
 		GetHandler(string) Job
 		Receivers() (<-chan Message,<-chan struct{})
 		Close() error
