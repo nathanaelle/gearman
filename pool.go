@@ -69,21 +69,43 @@ func (p *pool)list_servers() []Conn {
 }
 
 
-func (p *pool)add_handler(h string) error {
+func (p *pool)add_handler(h string) {
 	p.Lock()
 	defer 	p.Unlock()
 
-	if _,ok := p.handlers[h]; ok {
-		return errors.New("handler already exists: "+h)
+	if _,ok := p.handlers[h]; !ok {
+		p.handlers[h] = 0
 	}
-	p.handlers[h] = 0
 
 	can_do := BuildPacket(CAN_DO, Opacify([]byte(h)))
 	for _,server := range p.pool {
 		server <- can_do
 	}
-	return nil
 }
+
+
+func (p *pool)del_handler(h string) {
+	p.Lock()
+	defer 	p.Unlock()
+
+	cant_do := BuildPacket(CANT_DO, Opacify([]byte(h)))
+	for _,server := range p.pool {
+		server <- cant_do
+	}
+}
+
+func (p *pool)del_all_handlers() {
+	p.Lock()
+	defer 	p.Unlock()
+
+	for h,_ := range p.handlers {
+		cant_do	:= BuildPacket(CANT_DO, Opacify([]byte(h)))
+		for _,server := range p.pool {
+			server <- cant_do
+		}
+	}
+}
+
 
 
 func (p *pool)send_to(server Conn, pkt Packet) {

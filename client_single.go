@@ -6,8 +6,8 @@ import	(
 
 type	(
 	singleServer	struct {
-		configured	bool
 		pool
+		configured	bool
 		jobs		map[string]Task
 		m_queue		chan Message
 		r_q		[]Task

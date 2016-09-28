@@ -70,6 +70,28 @@ func (w *worker)AddHandler(name string,f Job) Worker {
 }
 
 
+//	Del a Job from a generic Worker
+func (w *worker)DelHandler(name string) Worker {
+	w.Lock()
+	delete(w.handlers,name)
+	w.Unlock()
+
+	w.del_handler(name)
+	return w
+}
+
+//	Del all Job from a generic Worker
+func (w *worker)DelAllHandlers() Worker {
+	w.Lock()
+	w.handlers = make(map[string]Job)
+	w.Unlock()
+
+	w.del_all_handlers()
+
+	return w
+}
+
+
 func (w *worker)Close() error {
 	return	nil
 }
