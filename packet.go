@@ -1,6 +1,7 @@
 package	gearman // import "github.com/nathanaelle/gearman"
 
 import	(
+	"io"
 	"fmt"
 )
 
@@ -23,6 +24,9 @@ type	(
 
 		//	implements Stringer interface
 		String()	string
+
+		//	implements io.WriterTo interface
+		WriteTo(io.Writer)	(int64,error)
 	}
 
 	//	packet with no payload
@@ -115,6 +119,24 @@ func (pl *pkt0size)Encode(buff []byte) (int,error) {
 }
 
 
+func (pl *pkt0size)WriteTo(w io.Writer) (n int64,err error) {
+	var buff [12]byte
+	uint642be(buff[0:8], uint64(pl.cmd))
+	uint322be(buff[8:12], 0)
+
+	dn := 0
+	for n <12 {
+		dn,err	= w.Write(buff[n:])
+		n	+= int64(dn)
+		if err != nil {
+			return	n, err
+		}
+	}
+
+	return n,nil
+}
+
+
 //	create a new packet
 func newPkt1len(cmd Command, payload []byte) (Packet,error) {
 	return	&pkt1len{ cmd, uint32(len(payload)), payload[:] }, nil
@@ -170,6 +192,33 @@ func (pl *pkt1len)Encode(buff []byte) (int,error) {
 	copy(buff[12:],pl.raw)
 
 	return int(pl.size+12),nil
+}
+
+
+func (pl *pkt1len)WriteTo(w io.Writer) (n int64,err error) {
+	var buff [12]byte
+	uint642be(buff[0:8], uint64(pl.cmd))
+	uint322be(buff[8:12], pl.size)
+
+	dn := 0
+	for n <12 {
+		dn,err	= w.Write(buff[n:])
+		n	+= int64(dn)
+		if err != nil {
+			return	n, err
+		}
+	}
+
+	n = 0
+	for n < int64(pl.size) {
+		dn,err	= w.Write(pl.raw[n:])
+		n	+= int64(dn)
+		if err != nil {
+			return	n+12, err
+		}
+	}
+
+	return n+12,nil
 }
 
 
@@ -262,4 +311,31 @@ func (pl *pktcommon)Encode(buff []byte) (int,error) {
 	copy(buff[12:],pl.raw)
 
 	return int(pl.size+12),nil
+}
+
+
+func (pl *pktcommon)WriteTo(w io.Writer) (n int64,err error) {
+	var buff [12]byte
+	uint642be(buff[0:8], uint64(pl.cmd))
+	uint322be(buff[8:12], pl.size)
+
+	dn := 0
+	for n < 12 {
+		dn,err	= w.Write(buff[n:])
+		n	+= int64(dn)
+		if err != nil {
+			return	n, err
+		}
+	}
+
+	n = 0
+	for n < int64(pl.size) {
+		dn,err	= w.Write(pl.raw[n:])
+		n	+= int64(dn)
+		if err != nil {
+			return	n+12, err
+		}
+	}
+
+	return n+12,nil
 }

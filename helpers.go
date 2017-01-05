@@ -115,22 +115,13 @@ func ReadPacket(c io.Reader) (Packet,error) {
 
 
 func WritePacket(c io.Writer, p Packet) (error) {
-	size	:= 0
-	raw 	:= p.Marshal()
+	_, err := p.WriteTo(c)
 
-	for size < len(raw) {
-		t_s, err := c.Write(raw[size:])
-		if err != nil {
-			return err
-		}
-		size += t_s
-	}
-
-	return nil
+	return err
 }
 
 
-func	BuildPacket(c Command, data ...MarshalerGearman) (p Packet) {
+func BuildPacket(c Command, data ...MarshalerGearman) (p Packet) {
 	var err error
 
 	switch	len(data) {

@@ -12,9 +12,9 @@ type (
 		sync.Mutex
 		counter *int32
 		r       []byte
-		w       []byte
+		w       chan int
 		r_ready chan []byte
-		w_ready chan []byte
+		w_ready	[]byte
 	}
 
 	testNetConn struct {
@@ -26,8 +26,9 @@ type (
 func ConnTest() *testConn {
 	return &testConn{
 		counter: new(int32),
-		r_ready: make(chan []byte, 10),
-		w_ready: make(chan []byte, 10),
+		r_ready: make(chan []byte, 20),
+		w_ready: make([]byte,0,65536),
+		w:	make(chan int,10),
 	}
 
 }
@@ -62,6 +63,7 @@ func (nc *testConn) Read(b []byte) (int, error) {
 	if len(b) < len(nc.r) {
 		copy(b, nc.r[0:len(b)])
 		nc.r = nc.r[len(b):]
+
 		return len(b), nil
 	}
 
@@ -80,12 +82,26 @@ func (nc *testConn) SetWriteDeadline(_ time.Time) {
 }
 
 func (nc *testConn) Write(b []byte) (int, error) {
-	nc.w_ready <- b
-	return len(b), nil
+	nc.w_ready = append(nc.w_ready, b...)
+	nc.w <- len(b)
+	return len(b),nil
 }
 
-func (nc *testConn) Received() (b []byte) {
-	return <-nc.w_ready
+func (nc *testConn) Received() (ret []byte) {
+	p := <- nc.w
+	if p == 12 {
+		ret = nc.w_ready[:p]
+
+		if ret[11] == 0 {
+			nc.w_ready = nc.w_ready[p:]
+			return	ret
+		}
+	}
+
+	q := <- nc.w
+	ret = nc.w_ready[:p+q]
+	nc.w_ready = nc.w_ready[p+q:]
+	return	ret
 }
 
 func (nc *testConn) Send(b Packet) {
