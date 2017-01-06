@@ -18,6 +18,8 @@ type loopreader struct {
 	buff []byte
 }
 
+
+
 func LoopReader(b []byte) io.Reader {
 	return &loopreader{0, b}
 }

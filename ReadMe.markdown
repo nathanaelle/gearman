@@ -53,28 +53,36 @@ There are some variant :
 ### Read on LoopReader
 
 ```
-BenchmarkReadPkt0size-4      	20000000	        68.6 ns/op	      24 B/op	       2 allocs/op
-BenchmarkReadPkt1len-4       	10000000	       133   ns/op	      40 B/op	       3 allocs/op
-BenchmarkReadPktcommon-4     	 5000000	       260   ns/op	     144 B/op	       4 allocs/op
+BenchmarkReadPkt0size-4             	20000000	        62.6 ns/op	      24 B/op	       2 allocs/op
+BenchmarkReadPkt1len-4              	20000000	        97.8 ns/op	      40 B/op	       3 allocs/op
+BenchmarkReadPktcommon-4            	10000000	       209 ns/op	     144 B/op	       4 allocs/op
 ```
+
+### PacketFactory (buffered reader)
+
+```
+BenchmarkPacketFactoryPkt0size-4    	30000000	        48.3 ns/op	      20 B/op	       1 allocs/op
+BenchmarkPacketFactoryPkt1len-4     	20000000	        56.6 ns/op	      33 B/op	       1 allocs/op
+BenchmarkPacketFactoryPktcommon-4   	10000000	       158 ns/op	     128 B/op	       2 allocs/op
+```
+
 
 ### Unmarshal
 
 ```
-BenchmarkUnmarshalPkt0size-4 	100000000	        24.0 ns/op	       8 B/op	       1 allocs/op
-BenchmarkUnmarshalPkt1len-4  	30000000	        55.2 ns/op	      48 B/op	       1 allocs/op
-BenchmarkUnmarshalPktcommon-4	10000000	       146   ns/op	      96 B/op	       2 allocs/op
+BenchmarkUnmarshalPkt0size-4        	100000000	        22.1 ns/op	       8 B/op	       1 allocs/op
+BenchmarkUnmarshalPkt1len-4         	30000000	        47.3 ns/op	      48 B/op	       1 allocs/op
+BenchmarkUnmarshalPktcommon-4       	10000000	       119 ns/op	      96 B/op	       2 allocs/op
 ```
 
 
 ### Marshal
 
 ```
-BenchmarkMarshalPkt0size-4   	100000000	        14.0 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMarshalPkt1len-4    	100000000	        22.1 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMarshalPktcommon-4  	100000000	        22.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshalPkt0size-4          	200000000	         6.49 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshalPkt1len-4           	100000000	        11.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshalPktcommon-4         	100000000	        12.0 ns/op	       0 B/op	       0 allocs/op
 ```
-
 
 ## Todo
 

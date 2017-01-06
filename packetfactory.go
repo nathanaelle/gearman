@@ -18,7 +18,6 @@ type	(
 )
 
 const	(
-	THRESHOLD	int	= 1<<13
 	MINSIZE		int	= 1<<16
 )
 
@@ -40,21 +39,24 @@ func (pf *packetFactory)read_hint(expected int) (err error) {
 		return	nil
 	}
 
-	if (cap(pf.b)-len(pf.b)) < expected {
-		if expected < (pf.size+len(pf.b)) {
-			expected = pf.size+len(pf.b)
+	if cap(pf.b) < expected {
+		new_size := expected
+		if new_size < (pf.size+len(pf.b)) {
+			new_size = pf.size+len(pf.b)
 		}
 
 		old	:= pf.b
-		pf.b	= make([]byte, 0, expected)
-		copy(pf.b[0:len(old)], old[:])
+		pf.b	= make([]byte, len(old), new_size)
+		copy(pf.b[0:len(old)], old[0:len(old)])
 	}
 
 	n	:= 0
-	dn	:= 0
-	for n < expected {
-		dn, err = pf.c.Read(pf.b[len(pf.b):cap(pf.b)])
-		n	+= dn
+	for len(pf.b) < expected {
+		n, err = pf.c.Read(pf.b[len(pf.b):cap(pf.b)])
+		pf.b = pf.b[0:len(pf.b)+n]
+		if err != nil {
+			return	err
+		}
 	}
 	return
 }
