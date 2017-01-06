@@ -50,15 +50,7 @@ There are some variant :
 ## Benchmarks
 
 
-### Read on LoopReader
-
-```
-BenchmarkReadPkt0size-4             	20000000	        62.6 ns/op	      24 B/op	       2 allocs/op
-BenchmarkReadPkt1len-4              	20000000	        97.8 ns/op	      40 B/op	       3 allocs/op
-BenchmarkReadPktcommon-4            	10000000	       209 ns/op	     144 B/op	       4 allocs/op
-```
-
-### PacketFactory (buffered reader)
+### PacketFactory on LoopReader
 
 ```
 BenchmarkPacketFactoryPkt0size-4    	30000000	        48.3 ns/op	      20 B/op	       1 allocs/op

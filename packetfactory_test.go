@@ -11,7 +11,7 @@ func BenchmarkPacketFactoryPkt0size(b *testing.B) {
 	r := LoopReader([]byte{0, 0x52, 0x45, 0x51, 0, 0, 0, 0x03, 0, 0, 0, 0})
 	pf:= NewPacketFactory(r, 1<<20)
 	for n := 0; n < b.N; n++ {
-		pf.Packet(	)
+		pf.Packet()
 	}
 }
 

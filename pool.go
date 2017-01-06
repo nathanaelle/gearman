@@ -136,6 +136,8 @@ func (p *pool)rloop(server Conn) {
 	var	pkt	Packet
 	defer	server.Close()
 
+	pf:= NewPacketFactory(server, 1<<20)
+
 	for {
 		select	{
 		case	<-p.r_end:
@@ -143,7 +145,7 @@ func (p *pool)rloop(server Conn) {
 
 		default:
 			server.SetReadDeadline(time.Now().Add(100*time.Millisecond))
-			pkt,err	= ReadPacket(server)
+			pkt,err	= pf.Packet()
 
 			switch	{
 			case	err == nil:
@@ -170,18 +172,18 @@ func (p *pool)wloop(server Conn,send_to <-chan Packet) {
 	for {
 		select	{
 		case	<-p.r_end:
-			WritePacket(server, reset_abilities)
+			reset_abilities.WriteTo(server)
 			return
 
 		case	data := <-send_to:
 			server.SetWriteDeadline(time.Now().Add(100*time.Millisecond))
-			err	= WritePacket(server, data)
+			_, err = data.WriteTo(server)
 
 			for err != nil {
 //				log.Println(err)
 				p.reconnect(server)
 				server.SetWriteDeadline(time.Now().Add(100*time.Millisecond))
-				err	= WritePacket(server, data)
+				_,err	= data.WriteTo(server)
 			}
 		}
 	}

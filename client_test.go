@@ -2,7 +2,6 @@ package gearman // import "github.com/nathanaelle/gearman"
 
 import (
 	"bytes"
-	"net"
 	"testing"
 )
 
@@ -59,8 +58,8 @@ func valid_result(t *testing.T, expected_res []byte, expected_err error) func([]
 	}
 }
 
-func packet_received_is(t *testing.T, c net.Conn, expected_pkt Packet) bool {
-	pkt, err := ReadPacket(c)
+func packet_received_is(t *testing.T, pf PacketFactory, expected_pkt Packet) bool {
+	pkt, err := pf.Packet()
 	if err != nil {
 		t.Errorf("got error %+v", err)
 		return false
@@ -69,8 +68,8 @@ func packet_received_is(t *testing.T, c net.Conn, expected_pkt Packet) bool {
 	return valid_step(t, pkt.Marshal(), expected_pkt)
 }
 
-func packet_received_is_any(t *testing.T, c net.Conn, expected_pkts ...Packet) bool {
-	pkt, err := ReadPacket(c)
+func packet_received_is_any(t *testing.T, pf PacketFactory, expected_pkts ...Packet) bool {
+	pkt, err := pf.Packet()
 	if err != nil {
 		t.Errorf("got error %+v", err)
 		return false

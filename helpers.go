@@ -83,44 +83,6 @@ func is_timeout(err error) bool {
 }
 
 
-
-func ReadPacket(c io.Reader) (Packet,error) {
-	var	header	[12]byte
-	var	payload	[]byte
-
-	if _, err := c.Read(header[:]); err != nil {
-		return nil,err
-	}
-	if header[0] != 0 {
-		return nil,TextProtocolError
-	}
-
-	cmd	:= Command(be2uint64(header[0:8]))
-	size	:= be2uint32(header[8:12])
-
-	if size > 0 {
-		t_size	:= uint32(0)
-		payload	=  make([]byte, size)
-		for t_size < size {
-			t_s, err := c.Read(payload[t_size:])
-			if err != nil {
-				return nil,err
-			}
-			t_size += uint32(t_s)
-		}
-	}
-
-	return	cmd.Unmarshal(payload[:])
-}
-
-
-func WritePacket(c io.Writer, p Packet) (error) {
-	_, err := p.WriteTo(c)
-
-	return err
-}
-
-
 func BuildPacket(c Command, data ...MarshalerGearman) (p Packet) {
 	var err error
 

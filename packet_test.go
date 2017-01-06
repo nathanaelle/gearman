@@ -73,7 +73,8 @@ var valid_packet []packet_test = []packet_test{
 func Test_Packet(t *testing.T) {
 	for Ti, vp := range valid_packet {
 		out := new(bytes.Buffer)
-		p, err := ReadPacket(bytes.NewBuffer(vp.data))
+		pf	:= NewPacketFactory(bytes.NewBuffer(vp.data), 0)
+		p, err := pf.Packet()
 
 		if !valid_err(t, err, vp.err) {
 			t.Logf("T_%d\t[%x] %+v", Ti, vp.data, vp.packet)
@@ -84,7 +85,7 @@ func Test_Packet(t *testing.T) {
 			continue
 		}
 
-		if err := WritePacket(out, p); err != nil {
+		if _,err := p.WriteTo(out); err != nil {
 			t.Logf("T_%d\t[%x] %+v [%x]", Ti, vp.data, vp.packet, out.Bytes())
 			t.Errorf("T_%d\t%+v", Ti, err)
 			continue
@@ -102,27 +103,6 @@ func Test_Packet(t *testing.T) {
 		}
 	}
 
-}
-
-func BenchmarkReadPkt0size(b *testing.B) {
-	r := LoopReader([]byte{0, 0x52, 0x45, 0x51, 0, 0, 0, 0x03, 0, 0, 0, 0})
-	for n := 0; n < b.N; n++ {
-		ReadPacket(r)
-	}
-}
-
-func BenchmarkReadPkt1len(b *testing.B) {
-	r := LoopReader([]byte{0, 0x52, 0x45, 0x53, 0, 0, 0, 0x10, 0, 0, 0, 0x0d, 'i', 'n', 't', 'e', 'r', 'n', 'a', 'l', ' ', 'e', 'c', 'h', 'o'})
-	for n := 0; n < b.N; n++ {
-		ReadPacket(r)
-	}
-}
-
-func BenchmarkReadPktcommon(b *testing.B) {
-	r := LoopReader([]byte{0, 0x52, 0x45, 0x53, 0, 0, 0, 0x0b, 0, 0, 0, 0x14, 0x48, 0x3a, 0x6c, 0x61, 0x70, 0x3a, 0x31, 0x00, 0x72, 0x65, 0x76, 0x65, 0x72, 0x73, 0x65, 0x00, 0x74, 0x65, 0x73, 0x74})
-	for n := 0; n < b.N; n++ {
-		ReadPacket(r)
-	}
 }
 
 //	Unmarshal

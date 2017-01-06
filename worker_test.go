@@ -119,6 +119,10 @@ func Test_Worker_two_servers(t *testing.T) {
 }
 
 func Test_Worker_netcon(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping test in short mode.")
+		return
+	}
 	end := make(chan struct{})
 
 	l, err := net.Listen("tcp", "localhost:60000")
@@ -151,32 +155,33 @@ func Test_Worker_netcon(t *testing.T) {
 			go func(c net.Conn) {
 				defer c.Close()
 
-				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
+				pf := NewPacketFactory(c, 1<<16)
+				if !packet_received_is_any(t, pf, BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
 					return
 				}
 
-				if !packet_received_is_any(t, c, BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
+				if !packet_received_is_any(t, pf, BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
 					return
 				}
 
-				WritePacket(c, noop)
+				noop.WriteTo(c)
 
-				if !packet_received_is(t, c, grab_job) {
+				if !packet_received_is(t, pf, grab_job) {
 					return
 				}
 
-				if !packet_received_is(t, c, grab_job_uniq) {
+				if !packet_received_is(t, pf, grab_job_uniq) {
 					return
 				}
 
-				WritePacket(c, no_job)
-				WritePacket(c, BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test"))))
+				no_job.WriteTo(c)
+				BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test"))).WriteTo(c)
 
-				if !packet_received_is(t, c, pre_sleep) {
+				if !packet_received_is(t, pf, pre_sleep) {
 					return
 				}
 
-				if !packet_received_is(t, c, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("tset")))) {
+				if !packet_received_is(t, pf, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("tset")))) {
 					return
 				}
 			}(conn)
