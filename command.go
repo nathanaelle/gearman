@@ -133,6 +133,25 @@ func (c Command)String() string {
 	}
 }
 
+func (cmd Command)Borrow(p Packet) (Packet,error) {
+	switch {
+	case  cmd == ECHO_RES && p.Cmd() == ECHO_REQ:
+		return	newPkt1len(cmd, p.Payload())
+	case cmd==WORK_COMPLETE && p.Cmd() == WORK_COMPLETE_WRK:
+		return	newPktnlen(cmd, p.Payload(), 2)
+	case cmd==WORK_EXCEPTION && p.Cmd() == WORK_EXCEPTION_WRK:
+		return	newPktnlen(cmd, p.Payload(), 2)
+	case cmd==WORK_DATA && p.Cmd() == WORK_DATA_WRK:
+		return	newPktnlen(cmd, p.Payload(), 2)
+	case cmd==WORK_WARNING && p.Cmd() == WORK_WARNING_WRK:
+		return	newPktnlen(cmd, p.Payload(), 2)
+	case cmd==WORK_STATUS && p.Cmd() == WORK_STATUS_WRK:
+		return	newPktnlen(cmd, p.Payload(), 3)
+	}
+	return	nil, &BorrowError{ cmd, p }
+}
+
+
 
 func (cmd Command)Unmarshal(payload []byte) (Packet,error) {
 	switch	cmd {

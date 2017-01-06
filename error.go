@@ -22,6 +22,11 @@ type	(
 		GivenLen	int
 	}
 
+	BorrowError struct {
+		Cmd	Command
+		Packet	Packet
+	}
+
 )
 
 var	(
@@ -42,4 +47,8 @@ func (e *PayloadLenError)Error() string {
 
 func (e *UndefinedPacketError)Error() string {
 	return	fmt.Sprintf("%v is undefined", e.Cmd)
+}
+
+func (e *BorrowError)Error() string {
+	return	fmt.Sprintf("%v can't borrow from %v", e.Cmd, e.Packet)
 }
