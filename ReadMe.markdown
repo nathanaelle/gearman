@@ -53,27 +53,26 @@ There are some variant :
 ### PacketFactory on LoopReader
 
 ```
-BenchmarkPacketFactoryPkt0size-4    	30000000	        48.3 ns/op	      20 B/op	       1 allocs/op
-BenchmarkPacketFactoryPkt1len-4     	20000000	        56.6 ns/op	      33 B/op	       1 allocs/op
-BenchmarkPacketFactoryPktcommon-4   	10000000	       158 ns/op	     128 B/op	       2 allocs/op
+BenchmarkPacketFactoryPkt0size-4    	30000000	        43.8 ns/op	      20 B/op	       1 allocs/op
+BenchmarkPacketFactoryPkt1len-4     	30000000	        53.1 ns/op	      33 B/op	       1 allocs/op
+BenchmarkPacketFactoryPktcommon-4   	10000000	       145   ns/op	     128 B/op	       2 allocs/op
 ```
-
 
 ### Unmarshal
 
 ```
-BenchmarkUnmarshalPkt0size-4        	100000000	        22.1 ns/op	       8 B/op	       1 allocs/op
-BenchmarkUnmarshalPkt1len-4         	30000000	        47.3 ns/op	      48 B/op	       1 allocs/op
-BenchmarkUnmarshalPktcommon-4       	10000000	       119 ns/op	      96 B/op	       2 allocs/op
+BenchmarkUnmarshalPkt0size-4        	100000000	        22.7 ns/op	       8 B/op	       1 allocs/op
+BenchmarkUnmarshalPkt1len-4         	30000000	        45.2 ns/op	      48 B/op	       1 allocs/op
+BenchmarkUnmarshalPktcommon-4       	20000000	       112   ns/op	      96 B/op	       2 allocs/op
 ```
 
 
 ### Marshal
 
 ```
-BenchmarkMarshalPkt0size-4          	200000000	         6.49 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMarshalPkt1len-4           	100000000	        11.6 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMarshalPktcommon-4         	100000000	        12.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshalPkt0size-4          	300000000	         4.25 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshalPkt1len-4           	200000000	         9.70 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMarshalPktcommon-4         	200000000	         9.81 ns/op	       0 B/op	       0 allocs/op
 ```
 
 ## Todo
