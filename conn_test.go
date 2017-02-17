@@ -5,16 +5,18 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"syscall"
+	"os"
+	"io"
+	"bytes"
 )
 
 type (
 	testConn struct {
 		sync.Mutex
 		counter *int32
-		r       []byte
-		w       chan int
-		r_ready chan []byte
-		w_ready	[]byte
+		sock	net.Conn
+		mockup	net.Conn
 	}
 
 	testNetConn struct {
@@ -23,12 +25,44 @@ type (
 	}
 )
 
+func connPair() (net.Conn,net.Conn,error) {
+	fds, err := syscall.Socketpair(syscall.AF_LOCAL, syscall.SOCK_STREAM, 0)
+	if err != nil {
+		return	nil,nil, err
+	}
+	defer	syscall.Close(fds[0])
+	defer	syscall.Close(fds[1])
+
+	sockF := os.NewFile(uintptr(fds[0]), "sock")
+	defer sockF.Close()
+
+	sock, err := net.FileConn(sockF)
+	if err != nil {
+		return	nil,nil, err
+	}
+
+	mockF := os.NewFile(uintptr(fds[1]), "mockup")
+	defer mockF.Close()
+	mock, err := net.FileConn(mockF)
+	if err != nil {
+		sock.Close()
+		return	nil,nil, err
+	}
+
+	return	sock, mock, nil
+}
+
+
 func ConnTest() *testConn {
+	sock, mockup, err := connPair()
+	if err != nil {
+		panic(err)
+	}
+
 	return &testConn{
 		counter: new(int32),
-		r_ready: make(chan []byte, 20),
-		w_ready: make([]byte,0,65536),
-		w:	make(chan int,10),
+		sock: sock,
+		mockup: mockup,
 	}
 
 }
@@ -49,30 +83,13 @@ func (nc *testConn) Redial() {
 }
 
 func (nc *testConn) Close() error {
+	nc.sock.Close()
+	nc.mockup.Close()
 	return nil
 }
 
 func (nc *testConn) Read(b []byte) (int, error) {
-	nc.Lock()
-	defer nc.Unlock()
-
-	if len(nc.r) == 0 {
-		nc.r = <-nc.r_ready
-	}
-
-	if len(b) < len(nc.r) {
-		copy(b, nc.r[0:len(b)])
-		nc.r = nc.r[len(b):]
-
-		return len(b), nil
-	}
-
-	copy(b[0:len(nc.r)], nc.r)
-	r := len(nc.r)
-	nc.r = nc.r[0:0]
-
-	return r, nil
-
+	return nc.sock.Read(b)
 }
 
 func (nc *testConn) SetReadDeadline(_ time.Time) {
@@ -82,34 +99,33 @@ func (nc *testConn) SetWriteDeadline(_ time.Time) {
 }
 
 func (nc *testConn) Write(b []byte) (int, error) {
-	nc.w_ready = append(nc.w_ready, b...)
-	nc.w <- len(b)
-	return len(b),nil
+	return	nc.sock.Write(b)
 }
 
-func (nc *testConn) Received() (ret []byte) {
-	p := <- nc.w
-	if p == 12 {
-		ret = nc.w_ready[:p]
+func (nc *testConn) Received() []byte {
+	buff	:= new(bytes.Buffer)
 
-		if ret[11] == 0 {
-			nc.w_ready = nc.w_ready[p:]
-			return	ret
-		}
+	if _, err := io.CopyN(buff, nc.mockup, 12); err != nil {
+		panic(err)
+	}
+	t := int64(be2uint32((buff.Bytes())[8:12]))
+	if t == 0 {
+		return	buff.Bytes()
 	}
 
-	q := <- nc.w
-	ret = nc.w_ready[:p+q]
-	nc.w_ready = nc.w_ready[p+q:]
-	return	ret
+	if _, err := io.CopyN(buff, nc.mockup, t); err != nil {
+		panic(err)
+	}
+
+	return	buff.Bytes()
 }
 
 func (nc *testConn) Send(b Packet) {
-	nc.r_ready <- b.Marshal()
+	nc.mockup.Write(b.Marshal())
 }
 
 func (nc *testConn) SendByte(b []byte) {
-	nc.r_ready <- b
+	nc.mockup.Write(b)
 }
 
 func NetConnTest(c net.Conn) *testNetConn {

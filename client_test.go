@@ -83,6 +83,8 @@ func Test_Client_simple(t *testing.T) {
 	defer close(end)
 
 	srv := ConnTest()
+	defer	srv.Close()
+
 	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
 	cli := SingleServerClient(end, nil) //logger)
 
@@ -106,6 +108,8 @@ func Test_Client_unordered_result(t *testing.T) {
 	defer close(end)
 
 	srv := ConnTest()
+	defer	srv.Close()
+
 	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
 	cli := SingleServerClient(end, nil) //logger)
 
