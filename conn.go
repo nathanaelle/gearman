@@ -67,9 +67,10 @@ func (nc *netConn)Redial() {
 
 	if nc.isNotClosed() {
 		conn,err = net.Dial(nc.network, nc.address)
-		nc.conn.Store(conn)
+		if conn != nil {
+			nc.conn.Store(conn)
+		}
 		if err != nil {
-			fmt.Printf("!>	%v",err)
 			time.Sleep(500*time.Millisecond)
 		}
 	}
