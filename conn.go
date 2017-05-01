@@ -110,10 +110,11 @@ func (nc *netConn)isNotClosed() bool {
 func (nc *netConn)nc() net.Conn {
 	for nc.isNotClosed() {
 		if c := nc.conn.Load(); c != nil {
-			return	c.(net.Conn)
+			if conn, ok := c.(net.Conn); ok {
+				return	conn
+			}
 		}
 		time.Sleep(time.Millisecond)
 	}
-
-	return	nil
+	return	&nullConn{ nc.network, nc.address }
 }
