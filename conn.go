@@ -5,6 +5,7 @@ import	(
 	"fmt"
 	"net"
 	"time"
+	"sync"
 	"sync/atomic"
 )
 
@@ -23,6 +24,7 @@ type	(
 	}
 
 	netConn	struct {
+		lock		*sync.Mutex
 		closed		int32
 		counter		int32
 		network,address string
@@ -33,6 +35,7 @@ type	(
 
 func NetConn(network,address string) Conn {
  	nc := &netConn{
+		lock:		new(sync.Mutex),
 		network:	network,
 		address:	address,
 	}
@@ -46,9 +49,9 @@ func (nc *netConn)Close() error {
 		return nil
 	}
 	atomic.AddInt32(&nc.closed, 1)
-	conn := nc.nc()
+	conn := nc.conn.Load()
 	if conn != nil {
-		return	conn.Close()
+		return	conn.(io.Closer).Close()
 	}
 	return	nil
 }
@@ -59,19 +62,17 @@ func (nc *netConn)String() string {
 }
 
 func (nc *netConn)Redial() {
-	var err error
-	conn := nc.nc()
-	if conn != nil {
-		conn.Close()
+	if conn := nc.conn.Load(); conn != nil {
+		conn.(io.Closer).Close()
 	}
 
 	if nc.isNotClosed() {
-		conn,err = net.Dial(nc.network, nc.address)
+		conn,err := net.Dial(nc.network, nc.address)
 		if conn != nil {
 			nc.conn.Store(conn)
 		}
 		if err != nil {
-			time.Sleep(500*time.Millisecond)
+			time.Sleep(100*time.Millisecond)
 		}
 	}
 }
@@ -107,10 +108,12 @@ func (nc *netConn)isNotClosed() bool {
 }
 
 func (nc *netConn)nc() net.Conn {
-	c := nc.conn.Load()
-	if c == nil {
-		return	nil
+	for nc.isNotClosed() {
+		if c := nc.conn.Load(); c != nil {
+			return	c.(net.Conn)
+		}
+		time.Sleep(time.Millisecond)
 	}
 
-	return	c.(net.Conn)
+	return	nil
 }

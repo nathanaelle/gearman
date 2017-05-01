@@ -45,12 +45,13 @@ func (p *pool)add_server(server Conn) error {
 		return errors.New("server already exists: "+server.String())
 	}
 
-	p.pool[server]=make(chan Packet,100)
+	pktchan		:= make(chan Packet,100)
+	p.pool[server]	= pktchan
 	p.Unlock()
 
-	go p.wloop(server,p.pool[server])
-	p.reconnect(server)
-	go p.rloop(server)
+	go p.wloop(server, pktchan)
+	p.reconnect(server,pktchan)
+	go p.rloop(server, pktchan)
 
 	return nil
 }
@@ -117,21 +118,21 @@ func (p *pool)send_to(server Conn, pkt Packet) {
 	}
 }
 
-func (p *pool)reconnect(server Conn) {
+func (p *pool)reconnect(server Conn, pktchan chan Packet) {
 	p.Lock()
 	defer 	p.Unlock()
 
 	server.Redial()
 
 	for h,_ := range p.handlers {
-		p.pool[server] <- BuildPacket(CAN_DO, Opacify([]byte(h)))
+		pktchan <- BuildPacket(CAN_DO, Opacify([]byte(h)))
 	}
 
-	p.s_queue <- Message{ p.pool[server], server, internal_echo_packet }
+	p.s_queue <- Message{ pktchan, server, internal_echo_packet }
 }
 
 
-func (p *pool)rloop(server Conn) {
+func (p *pool)rloop(server Conn, pktchan chan Packet) {
 	var	err	error
 	var	pkt	Packet
 	defer	server.Close()
@@ -149,12 +150,12 @@ func (p *pool)rloop(server Conn) {
 
 			switch	{
 			case	err == nil:
-				p.s_queue <- Message{ p.pool[server], server, pkt }
+				p.s_queue <- Message{ pktchan, server, pkt }
 
 			case	is_timeout(err):
 
 			case	is_eof(err):
-				p.reconnect(server)
+				p.reconnect(server, pktchan)
 
 			default:
 				time.Sleep(5*time.Second)
@@ -165,7 +166,7 @@ func (p *pool)rloop(server Conn) {
 }
 
 
-func (p *pool)wloop(server Conn,send_to <-chan Packet) {
+func (p *pool)wloop(server Conn, send_to chan Packet) {
 	var	err	error
 	defer	server.Close()
 
@@ -181,7 +182,7 @@ func (p *pool)wloop(server Conn,send_to <-chan Packet) {
 
 			for err != nil {
 //				log.Println(err)
-				p.reconnect(server)
+				p.reconnect(server, send_to)
 				server.SetWriteDeadline(time.Now().Add(100*time.Millisecond))
 				_,err	= data.WriteTo(server)
 			}
