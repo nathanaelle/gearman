@@ -14,8 +14,11 @@ type (
 		Server	Conn
 		Pkt	Packet
 	}
+)
 
-
+var (
+	IOTimeout	time.Duration	= 2*time.Second
+	RetryTimeout	time.Duration	= 50*time.Millisecond
 )
 
 
@@ -145,7 +148,7 @@ func (p *pool)rloop(server Conn, pktchan chan Packet) {
 			return
 
 		default:
-			server.SetReadDeadline(time.Now().Add(100*time.Millisecond))
+			server.SetReadDeadline(time.Now().Add(IOTimeout))
 			pkt,err	= pf.Packet()
 
 			switch	{
@@ -158,7 +161,7 @@ func (p *pool)rloop(server Conn, pktchan chan Packet) {
 				p.reconnect(server, pktchan)
 
 			default:
-				time.Sleep(5*time.Second)
+				time.Sleep(IOTimeout)
 //				log.Println(err)
 			}
 		}
@@ -177,13 +180,13 @@ func (p *pool)wloop(server Conn, send_to chan Packet) {
 			return
 
 		case	data := <-send_to:
-			server.SetWriteDeadline(time.Now().Add(100*time.Millisecond))
+			server.SetWriteDeadline(time.Now().Add(IOTimeout))
 			_, err = data.WriteTo(server)
 
 			for err != nil {
 //				log.Println(err)
 				p.reconnect(server, send_to)
-				server.SetWriteDeadline(time.Now().Add(100*time.Millisecond))
+				server.SetWriteDeadline(time.Now().Add(IOTimeout))
 				_,err	= data.WriteTo(server)
 			}
 		}

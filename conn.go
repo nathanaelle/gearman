@@ -72,7 +72,7 @@ func (nc *netConn)Redial() {
 			nc.conn.Store(conn)
 		}
 		if err != nil {
-			time.Sleep(100*time.Millisecond)
+			time.Sleep(RetryTimeout)
 		}
 	}
 }
@@ -114,7 +114,7 @@ func (nc *netConn)nc() net.Conn {
 				return	conn
 			}
 		}
-		time.Sleep(time.Millisecond)
+		time.Sleep(RetryTimeout)
 	}
 	return	&nullConn{ nc.network, nc.address }
 }
