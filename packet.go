@@ -120,11 +120,12 @@ func (pl *pkt0size)Encode(buff []byte) (int,error) {
 
 
 func (pl *pkt0size)WriteTo(w io.Writer) (n int64,err error) {
-	var buff [12]byte
+	var	buff	[12]byte
+	var	dn	int
+
 	uint642be(buff[0:8], uint64(pl.cmd))
 	uint322be(buff[8:12], 0)
 
-	dn := 0
 	for n <12 {
 		dn,err	= w.Write(buff[n:])
 		n	+= int64(dn)
@@ -196,11 +197,12 @@ func (pl *pkt1len)Encode(buff []byte) (int,error) {
 
 
 func (pl *pkt1len)WriteTo(w io.Writer) (n int64,err error) {
-	var buff [12]byte
+	var	buff	[12]byte
+	var	dn	int
+
 	uint642be(buff[0:8], uint64(pl.cmd))
 	uint322be(buff[8:12], pl.size)
 
-	dn := 0
 	for n <12 {
 		dn,err	= w.Write(buff[n:])
 		n	+= int64(dn)
@@ -315,11 +317,12 @@ func (pl *pktcommon)Encode(buff []byte) (int,error) {
 
 
 func (pl *pktcommon)WriteTo(w io.Writer) (n int64,err error) {
-	var buff [12]byte
+	var	buff	[12]byte
+	var	dn	int
+
 	uint642be(buff[0:8], uint64(pl.cmd))
 	uint322be(buff[8:12], pl.size)
 
-	dn := 0
 	for n < 12 {
 		dn,err	= w.Write(buff[n:])
 		n	+= int64(dn)

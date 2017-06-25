@@ -3,10 +3,11 @@ package gearman // import "github.com/nathanaelle/gearman"
 import (
 	"io"
 	"net"
+	"context"
 	"testing"
 )
 
-func trivialWorker(t *testing.T, end chan struct{}, srv ...Conn) {
+func trivialWorker(t *testing.T, end context.Context, srv ...Conn) {
 	w := NewWorker(end, nil)
 	w.AddServers(srv...)
 	w.AddHandler("reverse", JobHandler(func(payload io.Reader, reply io.Writer) error {
@@ -21,15 +22,15 @@ func trivialWorker(t *testing.T, end chan struct{}, srv ...Conn) {
 		return nil
 	}))
 
-	<-end
+	<-end.Done()
 	for _, s := range srv {
 		s.Close()
 	}
 }
 
 func Test_Worker_simple(t *testing.T) {
-	end := make(chan struct{})
-	defer close(end)
+	end, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	srv := ConnTest()
 	go trivialWorker(t, end, srv)
@@ -62,8 +63,8 @@ func Test_Worker_simple(t *testing.T) {
 }
 
 func Test_Worker_two_servers(t *testing.T) {
-	end := make(chan struct{})
-	defer close(end)
+	end, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	srv1 := ConnTest()
 	srv2 := ConnTest()
@@ -123,7 +124,8 @@ func Test_Worker_netcon(t *testing.T) {
 		t.Skip("Skipping test in short mode.")
 		return
 	}
-	end := make(chan struct{})
+	end, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	l, err := net.Listen("tcp", "localhost:60000")
 	if err != nil {
@@ -131,14 +133,13 @@ func Test_Worker_netcon(t *testing.T) {
 		return
 	}
 	defer l.Close()
-	defer close(end)
 
 	go trivialWorker(t, end, NetConn("tcp", "localhost:60000"))
 
 	nb_test := 0
 	for {
 		select {
-		case <-end:
+		case <-end.Done():
 			return
 
 		default:

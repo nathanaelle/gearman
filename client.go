@@ -2,6 +2,7 @@ package	gearman // import "github.com/nathanaelle/gearman"
 
 import	(
 	"log"
+	"context"
 )
 
 type	(
@@ -11,7 +12,7 @@ type	(
 		AssignTask(tid TaskID)
 		GetTask(TaskID)		Task
 		ExtractTask(TaskID)	Task
-		Receivers() 		(<-chan Message,<-chan struct{})
+		Receivers() 		(<-chan Message, context.Context)
 		Close()			error
 	}
 )
@@ -21,7 +22,7 @@ func	client_loop(c Client, dbg *log.Logger) {
 	var tid TaskID
 	var err	error
 
-	m_q,end	:= c.Receivers()
+	m_q,ctx	:= c.Receivers()
 
 	for	{
 		select	{
@@ -67,7 +68,7 @@ func	client_loop(c Client, dbg *log.Logger) {
 				debug(dbg, "CLI\t%s\n", msg.Pkt)
 			}
 
-		case	<-end:
+		case	<-ctx.Done():
 			return
 		}
 	}

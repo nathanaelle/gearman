@@ -50,7 +50,8 @@ func (pf *packetFactory)read_hint(expected int) (err error) {
 		copy(pf.b[0:len(old)], old[0:len(old)])
 	}
 
-	n	:= 0
+	var	n	int
+
 	for len(pf.b) < expected {
 		n, err = pf.c.Read(pf.b[len(pf.b):cap(pf.b)])
 		pf.b = pf.b[0:len(pf.b)+n]

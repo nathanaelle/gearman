@@ -2,6 +2,7 @@ package gearman // import "github.com/nathanaelle/gearman"
 
 import (
 	"bytes"
+	"context"
 	"testing"
 )
 
@@ -79,8 +80,8 @@ func packet_received_is_any(t *testing.T, pf PacketFactory, expected_pkts ...Pac
 }
 
 func Test_Client_simple(t *testing.T) {
-	end := make(chan struct{})
-	defer close(end)
+	end, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	srv := ConnTest()
 	defer	srv.Close()
@@ -104,8 +105,8 @@ func Test_Client_simple(t *testing.T) {
 }
 
 func Test_Client_unordered_result(t *testing.T) {
-	end := make(chan struct{})
-	defer close(end)
+	end, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	srv := ConnTest()
 	defer	srv.Close()

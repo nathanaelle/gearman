@@ -4,6 +4,7 @@ import	(
 	"sync"
 	"time"
 	"errors"
+	"context"
 )
 
 
@@ -26,12 +27,12 @@ type pool struct {
 	sync.Mutex
 	pool		map[Conn] chan Packet
 	s_queue		chan<- Message
-	r_end		<-chan struct{}
+	r_end		context.Context
 	handlers	map[string]int32
 }
 
 
-func (p *pool)new(s_queue chan<- Message, r_end <-chan struct{}) {
+func (p *pool)new(s_queue chan<- Message, r_end context.Context) {
 	p.pool		= make(map[Conn] chan Packet)
 	p.handlers	= make(map[string]int32)
 	p.s_queue	= s_queue
@@ -144,7 +145,7 @@ func (p *pool)rloop(server Conn, pktchan chan Packet) {
 
 	for {
 		select	{
-		case	<-p.r_end:
+		case	<-p.r_end.Done():
 			return
 
 		default:
@@ -175,7 +176,7 @@ func (p *pool)wloop(server Conn, send_to chan Packet) {
 
 	for {
 		select	{
-		case	<-p.r_end:
+		case	<-p.r_end.Done():
 			reset_abilities.WriteTo(server)
 			return
 

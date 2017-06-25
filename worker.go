@@ -5,6 +5,7 @@ import	(
 	"log"
 	"bytes"
 	"errors"
+	"context"
 )
 
 type	(
@@ -15,7 +16,7 @@ type	(
 		DelHandler(string) Worker
 		DelAllHandlers() Worker
 		GetHandler(string) Job
-		Receivers() (<-chan Message,<-chan struct{})
+		Receivers() (<-chan Message,context.Context)
 		Close() error
 	}
 
@@ -38,12 +39,12 @@ func (f work_writer) Write(p []byte) (int, error) {
 
 // create a new Worker
 // r_end is a channel to signal to the Worker to end the process
-func NewWorker(r_end <-chan struct{}, debug *log.Logger) Worker{
+func NewWorker(ctx context.Context, debug *log.Logger) Worker{
 	q		:= make(chan Message,100)
 	w		:= new(worker)
 	w.m_queue	= q
 	w.handlers	= make(map[string]Job)
-	w.pool.new(q, r_end)
+	w.pool.new(q, ctx)
 
 	go worker_loop(w, debug)
 
@@ -98,7 +99,7 @@ func (w *worker)Close() error {
 	return	nil
 }
 
-func (w *worker)Receivers() (<-chan Message,<-chan struct{}) {
+func (w *worker)Receivers() (<-chan Message, context.Context) {
 	return	w.m_queue,w.r_end
 }
 
@@ -216,7 +217,7 @@ func	worker_loop(w Worker,dbg *log.Logger) {
 				msg.Reply <- pre_sleep
 			}
 
-		case	<- end:
+		case	<- end.Done():
 			return
 		}
 	}

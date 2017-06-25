@@ -2,6 +2,7 @@ package	gearman	// import "github.com/nathanaelle/gearman"
 
 import	(
 	"log"
+	"context"
 )
 
 type	(
@@ -17,11 +18,11 @@ type	(
 
 // create a new Client
 // r_end is a channel to signal to the Client to end the process
-func SingleServerClient(r_end <-chan struct{}, debug *log.Logger) Client {
+func SingleServerClient(ctx context.Context, debug *log.Logger) Client {
 	c		:= new(singleServer)
 	c.m_queue	= make(chan Message,10)
 	c.jobs		= make(map[string]Task)
-	c.pool.new(c.m_queue, r_end)
+	c.pool.new(c.m_queue, ctx)
 
 	go client_loop(c,debug)
 
@@ -29,7 +30,7 @@ func SingleServerClient(r_end <-chan struct{}, debug *log.Logger) Client {
 }
 
 
-func (c *singleServer)Receivers() (<-chan Message,<-chan struct{}) {
+func (c *singleServer)Receivers() (<-chan Message,context.Context) {
 	return	c.m_queue, c.r_end
 }
 
