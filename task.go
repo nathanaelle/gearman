@@ -21,6 +21,8 @@ type	(
 		solved		*sync.WaitGroup
 		payload		bytes.Buffer
 		err		error
+		stat_num	int
+		stat_den	int
 	}
 
 	nullTask struct{}
@@ -52,6 +54,28 @@ func NewTask(cmd string, payload []byte) Task {
 }
 
 
+func NewTaskLow(cmd string, payload []byte) Task {
+	r := &task {
+		packet:	BuildPacket(SUBMIT_JOB_LOW, Opacify([]byte(cmd)), Opacify([]byte{}), Opacify(payload)),
+		solved:	new(sync.WaitGroup),
+	}
+
+	r.solved.Add(1)
+	return	r
+}
+
+
+func NewTaskHigh(cmd string, payload []byte) Task {
+	r := &task {
+		packet:	BuildPacket(SUBMIT_JOB_HIGH, Opacify([]byte(cmd)), Opacify([]byte{}), Opacify(payload)),
+		solved:	new(sync.WaitGroup),
+	}
+
+	r.solved.Add(1)
+	return	r
+}
+
+
 func (r *task) Packet() Packet {
 	return r.packet
 }
@@ -70,6 +94,16 @@ func (r *task) Handle(p Packet) {
 	case	WORK_EXCEPTION:
 		r.err = &ExceptionError { p.At(1).Bytes() }
 		r.solved.Done()
+
+	case	WORK_DATA:
+		r.payload.Write(p.At(1).Bytes())
+
+	case	WORK_STATUS:
+		// TODO
+
+	case	WORK_WARNING:
+		// TODO
+
 	}
 }
 
