@@ -7,9 +7,12 @@
 ### Worker Example
 
 ```
-end     := make(chan struct{})
+end, cancel := context.WithCancel(context.Background())
+defer cancel()
+
 w	:= gearman.NewWorker(end, nil)
-w.AddServers( gearman.NetConn("tcp","serveur:1234") )
+w.AddServers( gearman.NetConn("tcp","localhost:4730") )
+
 w.AddHandler("reverse", gearman.JobHandler(func(payload io.Reader,reply io.Writer) (error){
         buff	:= make([]byte,1<<16)
         s,_	:= payload.Read(buff)
@@ -25,23 +28,41 @@ w.AddHandler("reverse", gearman.JobHandler(func(payload io.Reader,reply io.Write
 <-end
 ```
 
-## Protocol
+### Client Example
 
-The protocol implemented is now  https://github.com/gearman/gearmand/blob/master/PROTOCOL
+```
+end, cancel := context.WithCancel(context.Background())
+defer cancel()
 
-There are some variant :
+w	:= gearman.SingleServerClient(end, nil)
+w.AddServers( gearman.NetConn("tcp","localhost:4730") )
 
-  * Binary only protocol
+bytes_val, err_if_any := cli.Submit( NewTask("some task", []byte("some byte encoded payload")) ).Value()
 
+```
 
 ## Features
 
-  * [x] Worker Support
-  * [x] Client Support
-  * [x] Access To Raw Packets
-  * [x] Async Client Task with promise
-  * [x] Multi server Worker
-  * [ ] Multi server Client
+  * Worker Support
+  * Client Support
+  * Access To Raw Packets
+  * Async Client Task with promise
+
+## Protocol Support
+
+### Protocol Plumbing
+
+  The protocol implemented is now  https://github.com/gearman/gearmand/blob/master/PROTOCOL
+
+  * Binary only protocol
+  * Access Raw Packets
+
+### Protocol Porcelain
+
+  * PacketFactory for parsing socket
+  * Multi server Worker
+  * Single server Client
+  * Round Robin Client
 
 ## License
 
@@ -74,7 +95,3 @@ BenchmarkMarshalPkt0size-4          	300000000	         4.25 ns/op	       0 B/op
 BenchmarkMarshalPkt1len-4           	200000000	         9.70 ns/op	       0 B/op	       0 allocs/op
 BenchmarkMarshalPktcommon-4         	200000000	         9.81 ns/op	       0 B/op	       0 allocs/op
 ```
-
-## Todo
-
-  * Documentation
