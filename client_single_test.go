@@ -19,11 +19,7 @@ func TestSingleClient_simple(t *testing.T) {
 
 	r := cli.Submit(NewTask("reverse", []byte("test")))
 
-	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test")))) {
-		return
-	}
-	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:1"))))
-	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:1")), Opacify([]byte("tset"))))
+	client_srv(srv, "H:lap:000", "test", "tset", t)
 
 	if !valid_result(t, []byte("tset"), nil)(r.Value()) {
 		return
@@ -64,11 +60,11 @@ func TestSingleClient_unordered_result(t *testing.T) {
 	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:3")), Opacify([]byte("3 tset"))))
 	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:1")), Opacify([]byte("1 tset"))))
 
-	if !valid_result(t, []byte("2 tset"), nil)(r2.Value()) {
+	if !valid_result(t, []byte("3 tset"), nil)(r3.Value()) {
 		return
 	}
 
-	if !valid_result(t, []byte("3 tset"), nil)(r3.Value()) {
+	if !valid_result(t, []byte("2 tset"), nil)(r2.Value()) {
 		return
 	}
 

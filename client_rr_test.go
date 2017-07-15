@@ -27,18 +27,13 @@ func TestRRClient_simple(t *testing.T) {
 
 	r1 := cli.Submit(NewTask("reverse", []byte("test 1")))
 	r2 := cli.Submit(NewTask("reverse", []byte("test 2")))
+	r3 := cli.Submit(NewTask("reverse", []byte("test 3")))
+	r4 := cli.Submit(NewTask("reverse", []byte("test 4")))
 
-	if !valid_step(t, srv1.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 1")))) {
-		return
-	}
-	srv1.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:1"))))
-	srv1.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:1")), Opacify([]byte("1 tset"))))
-
-	if !valid_step(t, srv2.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 2")))) {
-		return
-	}
-	srv2.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:2"))))
-	srv2.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:2")), Opacify([]byte("2 tset"))))
+	client_srv(srv1, "H:lap:1", "test 1", "1 tset", t)
+	client_srv(srv2, "H:lap:2", "test 2", "2 tset", t)
+	client_srv(srv1, "H:lap:3", "test 3", "3 tset", t)
+	client_srv(srv2, "H:lap:4", "test 4", "4 tset", t)
 
 	if !valid_result(t, []byte("1 tset"), nil)(r1.Value()) {
 		return
@@ -48,7 +43,51 @@ func TestRRClient_simple(t *testing.T) {
 		return
 	}
 
+	if !valid_result(t, []byte("3 tset"), nil)(r3.Value()) {
+		return
+	}
+
+	if !valid_result(t, []byte("4 tset"), nil)(r4.Value()) {
+		return
+	}
 }
+
+func TestRRClient_but_single(t *testing.T) {
+	end, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	srv1 := ConnTest()
+
+	defer	srv1.Close()
+
+	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
+	cli := RoundRobinClient(end, nil) //logger)
+	defer cli.Close()
+
+	cli.AddServers(srv1)
+
+	r1 := cli.Submit(NewTask("reverse", []byte("test 1")))
+	r2 := cli.Submit(NewTask("reverse", []byte("test 2")))
+	r3 := cli.Submit(NewTask("reverse", []byte("test 3")))
+
+	client_srv(srv1, "H:lap:1", "test 1", "1 tset", t)
+	client_srv(srv1, "H:lap:2", "test 2", "2 tset", t)
+	client_srv(srv1, "H:lap:3", "test 3", "3 tset", t)
+
+	if !valid_result(t, []byte("1 tset"), nil)(r1.Value()) {
+		return
+	}
+
+	if !valid_result(t, []byte("2 tset"), nil)(r2.Value()) {
+		return
+	}
+
+	if !valid_result(t, []byte("3 tset"), nil)(r3.Value()) {
+		return
+	}
+
+}
+
 
 func TestRRClient_unordered_result(t *testing.T) {
 
@@ -87,6 +126,15 @@ func TestRRClient_unordered_result(t *testing.T) {
 
 	wg.Wait()
 
+}
+
+
+func client_srv(srv *testConn, taskid, expected, answer string, t *testing.T) {
+	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte(expected)))) {
+		return
+	}
+	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte(taskid))))
+	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte(taskid)), Opacify([]byte(answer))))
 }
 
 
