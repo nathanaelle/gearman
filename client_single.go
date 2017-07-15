@@ -2,6 +2,7 @@ package	gearman	// import "github.com/nathanaelle/gearman"
 
 import	(
 	"log"
+	"sync"
 	"context"
 )
 
@@ -12,16 +13,18 @@ type	(
 		jobs		map[string]Task
 		m_queue		chan Message
 		r_q		[]Task
+		r_qstart	[]Task
+		climutex	*sync.Mutex
 	}
 )
 
 
 // create a new Client
-// r_end is a channel to signal to the Client to end the process
 func SingleServerClient(ctx context.Context, debug *log.Logger) Client {
 	c		:= new(singleServer)
-	c.m_queue	= make(chan Message,10)
+	c.m_queue	= make(chan Message, 10)
 	c.jobs		= make(map[string]Task)
+	c.climutex	= new(sync.Mutex)
 	c.pool.new(c.m_queue, ctx)
 
 	go client_loop(c,debug)
@@ -30,7 +33,7 @@ func SingleServerClient(ctx context.Context, debug *log.Logger) Client {
 }
 
 
-func (c *singleServer)Receivers() (<-chan Message,context.Context) {
+func (c *singleServer)receivers() (<-chan Message,context.Context) {
 	return	c.m_queue, c.r_end
 }
 
@@ -60,6 +63,9 @@ func (c *singleServer)AddServers(servers ...Conn) Client {
 
 
 func (c *singleServer)Submit(req Task) Task {
+	c.climutex.Lock()
+	defer c.climutex.Unlock()
+
 	c.r_q	= append(c.r_q, req)
 
 	for _,s := range c.list_servers() {
@@ -70,13 +76,19 @@ func (c *singleServer)Submit(req Task) Task {
 }
 
 
-func (c *singleServer)AssignTask(tid TaskID) {
+func (c *singleServer)assignTask(tid TaskID) {
+	c.climutex.Lock()
+	defer c.climutex.Unlock()
+
 	c.jobs[tid.String()]	= c.r_q[0]
 	c.r_q			= c.r_q[1:]
 }
 
 
-func (c *singleServer)GetTask(tid TaskID) Task {
+func (c *singleServer)getTask(tid TaskID) Task {
+	c.climutex.Lock()
+	defer c.climutex.Unlock()
+
 	if res,ok := c.jobs[tid.String()]; ok {
 		return	res
 	}
@@ -84,7 +96,10 @@ func (c *singleServer)GetTask(tid TaskID) Task {
 }
 
 
-func (c *singleServer)ExtractTask(tid TaskID) Task {
+func (c *singleServer)extractTask(tid TaskID) Task {
+	c.climutex.Lock()
+	defer c.climutex.Unlock()
+
 	s_tid := tid.String()
 	if res,ok := c.jobs[s_tid]; ok {
 		delete(c.jobs, s_tid)
