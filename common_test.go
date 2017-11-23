@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func valid_step(t *testing.T, rcvd []byte, expected Packet) bool {
+func validStep(t *testing.T, rcvd []byte, expected Packet) bool {
 	if bytes.Equal(rcvd, expected.Marshal()) {
 		return true
 	}
@@ -65,7 +65,7 @@ func packet_received_is(t *testing.T, pf PacketFactory, expected_pkt Packet) boo
 		return false
 	}
 
-	return valid_step(t, pkt.Marshal(), expected_pkt)
+	return validStep(t, pkt.Marshal(), expected_pkt)
 }
 
 func packet_received_is_any(t *testing.T, pf PacketFactory, expected_pkts ...Packet) bool {

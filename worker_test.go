@@ -1,13 +1,13 @@
 package gearman // import "github.com/nathanaelle/gearman"
 
 import (
+	"context"
 	"io"
 	"net"
-	"context"
 	"testing"
 )
 
-func trivialWorker(t *testing.T, end context.Context, srv ...Conn) {
+func trivialWorker(end context.Context, t *testing.T, srv ...Conn) {
 	w := NewWorker(end, nil)
 	w.AddServers(srv...)
 	w.AddHandler("reverse", JobHandler(func(payload io.Reader, reply io.Writer) error {
@@ -33,7 +33,7 @@ func Test_Worker_simple(t *testing.T) {
 	defer cancel()
 
 	srv := ConnTest()
-	go trivialWorker(t, end, srv)
+	go trivialWorker(end, t, srv)
 
 	if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
 		return
@@ -44,20 +44,20 @@ func Test_Worker_simple(t *testing.T) {
 	}
 
 	srv.Send(noop)
-	if !valid_step(t, srv.Received(), grab_job) {
+	if !validStep(t, srv.Received(), grab_job) {
 		return
 	}
 
-	if !valid_step(t, srv.Received(), grab_job_uniq) {
+	if !validStep(t, srv.Received(), grab_job_uniq) {
 		return
 	}
 
 	srv.Send(no_job)
 	srv.Send(BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test"))))
-	if !valid_step(t, srv.Received(), pre_sleep) {
+	if !validStep(t, srv.Received(), pre_sleep) {
 		return
 	}
-	if !valid_step(t, srv.Received(), BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("tset")))) {
+	if !validStep(t, srv.Received(), BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("tset")))) {
 		return
 	}
 }
@@ -68,7 +68,7 @@ func Test_Worker_two_servers(t *testing.T) {
 
 	srv1 := ConnTest()
 	srv2 := ConnTest()
-	go trivialWorker(t, end, srv1, srv2)
+	go trivialWorker(end, t, srv1, srv2)
 
 	for _, srv := range []*testConn{srv1, srv2} {
 		if !valid_any_step(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), pre_sleep) {
@@ -84,10 +84,10 @@ func Test_Worker_two_servers(t *testing.T) {
 	srv1.Send(noop)
 
 	for _, srv := range []*testConn{srv1, srv2} {
-		if !valid_step(t, srv.Received(), grab_job) {
+		if !validStep(t, srv.Received(), grab_job) {
 			return
 		}
-		if !valid_step(t, srv.Received(), grab_job_uniq) {
+		if !validStep(t, srv.Received(), grab_job_uniq) {
 			return
 		}
 	}
@@ -134,9 +134,9 @@ func Test_Worker_netcon(t *testing.T) {
 	}
 	defer l.Close()
 
-	go trivialWorker(t, end, NetConn("tcp", "localhost:60000"))
+	go trivialWorker(end, t, NetConn("tcp", "localhost:60000"))
 
-	nb_test := 0
+	nbTests := 0
 	for {
 		select {
 		case <-end.Done():
@@ -148,8 +148,8 @@ func Test_Worker_netcon(t *testing.T) {
 				t.Errorf("got error %+v", err)
 				return
 			}
-			nb_test++
-			if nb_test > 10 {
+			nbTests++
+			if nbTests > 10 {
 				return
 			}
 

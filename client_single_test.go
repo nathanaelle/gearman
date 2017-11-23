@@ -10,7 +10,7 @@ func TestSingleClient_simple(t *testing.T) {
 	defer cancel()
 
 	srv := ConnTest()
-	defer	srv.Close()
+	defer srv.Close()
 
 	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
 	cli := SingleServerClient(end, nil) //logger)
@@ -19,7 +19,7 @@ func TestSingleClient_simple(t *testing.T) {
 
 	r := cli.Submit(NewTask("reverse", []byte("test")))
 
-	client_srv(srv, "H:lap:000", "test", "tset", t)
+	clientSrv(srv, "H:lap:000", "test", "tset", t)
 
 	if !valid_result(t, []byte("tset"), nil)(r.Value()) {
 		return
@@ -31,7 +31,7 @@ func TestSingleClient_unordered_result(t *testing.T) {
 	defer cancel()
 
 	srv := ConnTest()
-	defer	srv.Close()
+	defer srv.Close()
 
 	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
 	cli := SingleServerClient(end, nil) //logger)
@@ -42,13 +42,13 @@ func TestSingleClient_unordered_result(t *testing.T) {
 	r2 := cli.Submit(NewTask("reverse", []byte("test 2")))
 	r3 := cli.Submit(NewTask("reverse", []byte("test 3")))
 
-	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 1")))) {
+	if !validStep(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 1")))) {
 		return
 	}
-	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 2")))) {
+	if !validStep(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 2")))) {
 		return
 	}
-	if !valid_step(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 3")))) {
+	if !validStep(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 3")))) {
 		return
 	}
 

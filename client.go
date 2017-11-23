@@ -1,33 +1,32 @@
-package	gearman // import "github.com/nathanaelle/gearman"
+package gearman // import "github.com/nathanaelle/gearman"
 
-import	(
-	"log"
+import (
 	"context"
+	"log"
 )
 
-type	(
-	Client	interface {
-		AddServers(...Conn)	Client
-		Submit(Task)		Task
-		Close()			error
+type (
+	Client interface {
+		AddServers(...Conn) Client
+		Submit(Task) Task
+		Close() error
 
 		assignTask(tid TaskID)
-		getTask(TaskID)		Task
-		extractTask(TaskID)	Task
-		receivers() 		(<-chan Message, context.Context)
+		getTask(TaskID) Task
+		extractTask(TaskID) Task
+		receivers() (<-chan Message, context.Context)
 	}
 )
 
-
-func	client_loop(c Client, dbg *log.Logger) {
+func clientLoop(c Client, dbg *log.Logger) {
 	var tid TaskID
-	var err	error
+	var err error
 
-	m_q,ctx	:= c.receivers()
+	mQueue, ctx := c.receivers()
 
-	for	{
-		select	{
-		case	msg, done := <-m_q:
+	for {
+		select {
+		case msg, done := <-mQueue:
 			if msg.Pkt == nil {
 				if done {
 					return
@@ -36,51 +35,50 @@ func	client_loop(c Client, dbg *log.Logger) {
 				continue
 			}
 
-			debug(dbg, "CLI\t%s\n",msg.Pkt)
-			switch	msg.Pkt.Cmd() {
-			case	NOOP:
+			debug(dbg, "CLI\t%s\n", msg.Pkt)
+			switch msg.Pkt.Cmd() {
+			case NOOP:
 
-			case	ECHO_RES:
-				debug(dbg, "CLI\tECHO [%s]\n", string(msg.Pkt.At(0).Bytes()) )
+			case ECHO_RES:
+				debug(dbg, "CLI\tECHO [%s]\n", string(msg.Pkt.At(0).Bytes()))
 
-			case	ERROR:
-				debug(dbg, "CLI\tERR [%s] [%s]\n",msg.Pkt.At(0).Bytes(),string(msg.Pkt.At(1).Bytes()))
+			case ERROR:
+				debug(dbg, "CLI\tERR [%s] [%s]\n", msg.Pkt.At(0).Bytes(), string(msg.Pkt.At(1).Bytes()))
 
-			case	JOB_CREATED:
+			case JOB_CREATED:
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
-					debug(dbg, "CLI\tJOB_CREATED TID [%s] err : %v\n", string(msg.Pkt.At(0).Bytes()), err )
+					debug(dbg, "CLI\tJOB_CREATED TID [%s] err : %v\n", string(msg.Pkt.At(0).Bytes()), err)
 					panic(err)
 				}
 				c.assignTask(tid)
 
-
-			case	WORK_DATA, WORK_WARNING, WORK_STATUS:
+			case WORK_DATA, WORK_WARNING, WORK_STATUS:
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
-					debug(dbg, "CLI\t%s TID [%s] err : %v\n", msg.Pkt.Cmd(), string(msg.Pkt.At(0).Bytes()), err )
+					debug(dbg, "CLI\t%s TID [%s] err : %v\n", msg.Pkt.Cmd(), string(msg.Pkt.At(0).Bytes()), err)
 					panic(err)
 				}
 
 				c.getTask(tid).Handle(msg.Pkt)
 
-			case	WORK_COMPLETE, WORK_FAIL, WORK_EXCEPTION:
+			case WORK_COMPLETE, WORK_FAIL, WORK_EXCEPTION:
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
-					debug(dbg, "CLI\t%s TID [%s] err : %v\n", msg.Pkt.Cmd(), string(msg.Pkt.At(0).Bytes()), err )
+					debug(dbg, "CLI\t%s TID [%s] err : %v\n", msg.Pkt.Cmd(), string(msg.Pkt.At(0).Bytes()), err)
 					panic(err)
 				}
 
 				c.extractTask(tid).Handle(msg.Pkt)
 
-			case	STATUS_RES:
+			case STATUS_RES:
 				panic("status_res not wrote")
 
-			case	OPTION_RES:
+			case OPTION_RES:
 				panic("option_res not wrote")
 
 			default:
 				debug(dbg, "CLI\t%s\n", msg.Pkt)
 			}
 
-		case	<-ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}

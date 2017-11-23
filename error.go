@@ -1,54 +1,50 @@
-package	gearman // import "github.com/nathanaelle/gearman"
+package gearman // import "github.com/nathanaelle/gearman"
 
-import	(
-	"fmt"
+import (
 	"errors"
+	"fmt"
 )
 
-
-type	(
+type (
 	ExceptionError struct {
-		Payload	[]byte
+		Payload []byte
 	}
 
 	UndefinedPacketError struct {
-		Cmd	Command
+		Cmd Command
 	}
 
-
 	PayloadLenError struct {
-		Cmd		Command
-		ExpectedLen	int
-		GivenLen	int
+		Cmd         Command
+		ExpectedLen int
+		GivenLen    int
 	}
 
 	BorrowError struct {
-		Cmd	Command
-		Packet	Packet
+		Cmd    Command
+		Packet Packet
 	}
-
 )
 
-var	(
-	unknownError			error	= errors.New("Unspecified Error happens")
-	BuffTooSmallError		error	= errors.New("Buffer is Too Small")
-	PayloadInEmptyPacketError	error	= errors.New("Found payload in expected empty packet")
-	TextProtocolError		error	= errors.New("Text Protocol is unsupported")
+var (
+	unknownError              error = errors.New("Unspecified Error happens")
+	BuffTooSmallError         error = errors.New("Buffer is Too Small")
+	PayloadInEmptyPacketError error = errors.New("Found payload in expected empty packet")
+	TextProtocolError         error = errors.New("Text Protocol is unsupported")
 )
 
-
-func (e *ExceptionError)Error() string {
-	return	fmt.Sprintf("Error [%x]", e.Payload)
+func (e *ExceptionError) Error() string {
+	return fmt.Sprintf("Error [%x]", e.Payload)
 }
 
-func (e *PayloadLenError)Error() string {
-	return	fmt.Sprintf("[%d] items Required for [%v] payload but got [%v] items", e.ExpectedLen, e.Cmd, e.GivenLen)
+func (e *PayloadLenError) Error() string {
+	return fmt.Sprintf("[%d] items Required for [%v] payload but got [%v] items", e.ExpectedLen, e.Cmd, e.GivenLen)
 }
 
-func (e *UndefinedPacketError)Error() string {
-	return	fmt.Sprintf("%v is undefined", e.Cmd)
+func (e *UndefinedPacketError) Error() string {
+	return fmt.Sprintf("%v is undefined", e.Cmd)
 }
 
-func (e *BorrowError)Error() string {
-	return	fmt.Sprintf("%v can't borrow from %v", e.Cmd, e.Packet)
+func (e *BorrowError) Error() string {
+	return fmt.Sprintf("%v can't borrow from %v", e.Cmd, e.Packet)
 }
