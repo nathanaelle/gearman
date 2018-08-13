@@ -1,42 +1,42 @@
-package	gearman // import "github.com/nathanaelle/gearman"
+package gearman // import "github.com/nathanaelle/gearman"
 
-import	(
-	"io"
+import (
 	"errors"
+	"io"
 )
 
-
-type	(
-	Job	interface {
+type (
+	Job interface {
 		// this describe a Job
 		Serve(payload io.Reader, reply, data io.Writer, progress chan<- int) (success bool, err error)
 	}
 
-	JobHandler	func(payload io.Reader,reply io.Writer) (err error)
+	// JobHandler is a light version of a Job
+	JobHandler func(payload io.Reader, reply io.Writer) (err error)
+
+	// LongJobHandler is the heavy version (and maybe long in time) of a Job
+	LongJobHandler func(payload io.Reader, reply, data io.Writer, progress chan<- int) (success bool, err error)
 )
 
-
-var FailJob JobHandler = func(payload io.Reader,reply io.Writer) (err error) {
+// FailJob is a Failed Job
+var FailJob Job = JobHandler(func(payload io.Reader, reply io.Writer) (err error) {
 	return errors.New("job doesn't exist")
-}
+})
 
-
+// Serve is the the implementation of Job.Serve
 func (jh JobHandler) Serve(payload io.Reader, reply, data io.Writer, progress chan<- int) (success bool, err error) {
 	close(progress)
 
-	err = jh(payload,reply)
+	err = jh(payload, reply)
 	if err == nil {
 		return true, nil
 	}
 	return false, err
 }
 
-
-
-type	LongJobHandler	func(payload io.Reader, reply, data io.Writer, progress chan<- int) (success bool, err error)
-
+// Serve is the the implementation of Job.Serve
 func (jh LongJobHandler) Serve(payload io.Reader, reply io.Writer, data io.Writer, progress chan<- int) (success bool, err error) {
 	defer close(progress)
 
-	return jh(payload,reply,data,progress)
+	return jh(payload, reply, data, progress)
 }

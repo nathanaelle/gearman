@@ -31,6 +31,7 @@ var (
 	BuffTooSmallError         error = errors.New("Buffer is Too Small")
 	PayloadInEmptyPacketError error = errors.New("Found payload in expected empty packet")
 	TextProtocolError         error = errors.New("Text Protocol is unsupported")
+	CastOpaqueAsOpaqueError   error = errors.New("Can't cast Opaque as Opaque")
 )
 
 func (e *ExceptionError) Error() string {

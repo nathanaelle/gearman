@@ -14,7 +14,7 @@ func validStep(t *testing.T, rcvd []byte, expected Packet) bool {
 	return false
 }
 
-func valid_byte(t *testing.T, rcvd, expected []byte) bool {
+func validByte(t *testing.T, rcvd, expected []byte) bool {
 	if bytes.Equal(rcvd, expected) {
 		return true
 	}
@@ -23,17 +23,17 @@ func valid_byte(t *testing.T, rcvd, expected []byte) bool {
 	return false
 }
 
-func valid_err(t *testing.T, err, expected_err error) bool {
+func validErr(t *testing.T, err, expectedErr error) bool {
 	switch {
-	case err != nil && expected_err != nil:
-		if err.Error() != expected_err.Error() {
-			t.Errorf("got error [%v] expected [%v]", err, expected_err)
+	case err != nil && expectedErr != nil:
+		if err.Error() != expectedErr.Error() {
+			t.Errorf("got error [%v] expected [%v]", err, expectedErr)
 			return false
 		}
 
 	default:
-		if err != expected_err {
-			t.Errorf("got error [%v] expected [%v]", err, expected_err)
+		if err != expectedErr {
+			t.Errorf("got error [%v] expected [%v]", err, expectedErr)
 			return false
 		}
 	}
@@ -41,7 +41,7 @@ func valid_err(t *testing.T, err, expected_err error) bool {
 	return true
 }
 
-func valid_any_step(t *testing.T, rcvd []byte, expecteds ...Packet) bool {
+func validAnyStep(t *testing.T, rcvd []byte, expecteds ...Packet) bool {
 	for _, expected := range expecteds {
 		if bytes.Equal(rcvd, expected.Marshal()) {
 			return true
@@ -52,28 +52,28 @@ func valid_any_step(t *testing.T, rcvd []byte, expecteds ...Packet) bool {
 	return false
 }
 
-func valid_result(t *testing.T, expected_res []byte, expected_err error) func([]byte, error) bool {
+func validResult(t *testing.T, expectedRes []byte, expectedErr error) func([]byte, error) bool {
 	return func(res []byte, err error) bool {
-		return valid_err(t, err, expected_err) && valid_byte(t, res, expected_res)
+		return validErr(t, err, expectedErr) && validByte(t, res, expectedRes)
 	}
 }
 
-func packet_received_is(t *testing.T, pf PacketFactory, expected_pkt Packet) bool {
+func packetReceivedIs(t *testing.T, pf PacketFactory, expectedPkt Packet) bool {
 	pkt, err := pf.Packet()
 	if err != nil {
 		t.Errorf("got error %+v", err)
 		return false
 	}
 
-	return validStep(t, pkt.Marshal(), expected_pkt)
+	return validStep(t, pkt.Marshal(), expectedPkt)
 }
 
-func packet_received_is_any(t *testing.T, pf PacketFactory, expected_pkts ...Packet) bool {
+func packetReceivedIsAny(t *testing.T, pf PacketFactory, expectedPkts ...Packet) bool {
 	pkt, err := pf.Packet()
 	if err != nil {
 		t.Errorf("got error %+v", err)
 		return false
 	}
 
-	return valid_any_step(t, pkt.Marshal(), expected_pkts...)
+	return validAnyStep(t, pkt.Marshal(), expectedPkts...)
 }

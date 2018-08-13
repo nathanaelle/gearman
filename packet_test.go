@@ -6,19 +6,17 @@ import (
 	"testing"
 )
 
-type packet_test struct {
-	data    []byte
-	packet  Packet
-	err     error
-	pl_size int
+type packetTest struct {
+	data   []byte
+	packet Packet
+	err    error
+	plSize int
 }
 
 type loopreader struct {
 	idx  int
 	buff []byte
 }
-
-
 
 func LoopReader(b []byte) io.Reader {
 	return &loopreader{0, b}
@@ -37,10 +35,10 @@ func (lr *loopreader) Read(b []byte) (int, error) {
 	return l, nil
 }
 
-var valid_packet []packet_test = []packet_test{
+var validPacket = []packetTest{
 	{
 		[]byte{0, 0x52, 0x45, 0x53, 0, 0, 0, 0x11, 0, 0, 0, 0x0d, 'i', 'n', 't', 'e', 'r', 'n', 'a', 'l', ' ', 'e', 'c', 'h', 'o'},
-		internal_echo_packet,
+		internalEchoPacket,
 		nil,
 		1,
 	},
@@ -58,7 +56,7 @@ var valid_packet []packet_test = []packet_test{
 	},
 	{
 		[]byte{0, 0x52, 0x45, 0x51, 0, 0, 0, 0x03, 0, 0, 0, 0},
-		reset_abilities,
+		resetAbilities,
 		nil,
 		0,
 	},
@@ -71,12 +69,12 @@ var valid_packet []packet_test = []packet_test{
 }
 
 func Test_Packet(t *testing.T) {
-	for Ti, vp := range valid_packet {
+	for Ti, vp := range validPacket {
 		out := new(bytes.Buffer)
-		pf	:= NewPacketFactory(bytes.NewBuffer(vp.data), 0)
+		pf := NewPacketFactory(bytes.NewBuffer(vp.data), 0)
 		p, err := pf.Packet()
 
-		if !valid_err(t, err, vp.err) {
+		if !validErr(t, err, vp.err) {
 			t.Logf("T_%d\t[%x] %+v", Ti, vp.data, vp.packet)
 			continue
 		}
@@ -85,7 +83,7 @@ func Test_Packet(t *testing.T) {
 			continue
 		}
 
-		if _,err := p.WriteTo(out); err != nil {
+		if _, err := p.WriteTo(out); err != nil {
 			t.Logf("T_%d\t[%x] %+v [%x]", Ti, vp.data, vp.packet, out.Bytes())
 			t.Errorf("T_%d\t%+v", Ti, err)
 			continue
@@ -97,8 +95,8 @@ func Test_Packet(t *testing.T) {
 			continue
 		}
 
-		if p.Len() != vp.pl_size {
-			t.Errorf("T_%d\tgot [%d] expected [%d]", Ti, p.Len(), vp.pl_size)
+		if p.Len() != vp.plSize {
+			t.Errorf("T_%d\tgot [%d] expected [%d]", Ti, p.Len(), vp.plSize)
 			continue
 		}
 	}
@@ -130,14 +128,14 @@ func BenchmarkUnmarshalPktcommon(b *testing.B) {
 func BenchmarkMarshalPkt0size(b *testing.B) {
 	var buff [12]byte
 	for n := 0; n < b.N; n++ {
-		reset_abilities.Encode(buff[:])
+		resetAbilities.Encode(buff[:])
 	}
 }
 
 func BenchmarkMarshalPkt1len(b *testing.B) {
 	var buff [25]byte
 
-	pkt := internal_echo_packet
+	pkt := internalEchoPacket
 	for n := 0; n < b.N; n++ {
 		pkt.Encode(buff[:])
 	}

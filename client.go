@@ -6,6 +6,7 @@ import (
 )
 
 type (
+	// Client define the exposed interface of a gearman Client
 	Client interface {
 		AddServers(...Conn) Client
 		Submit(Task) Task

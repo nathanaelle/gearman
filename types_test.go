@@ -9,13 +9,13 @@ import (
 func Test_Opaque(t *testing.T) {
 	var err error
 
-	err = opaque_test([]byte{})
+	err = opaqueTest([]byte{})
 	if err != nil {
 		t.Errorf("got error %+v", err)
 		return
 	}
 
-	err = opaque_test([]byte("hello"))
+	err = opaqueTest([]byte("hello"))
 	if err != nil {
 		t.Errorf("got error %+v", err)
 		return
@@ -23,7 +23,7 @@ func Test_Opaque(t *testing.T) {
 
 }
 
-func opaque_test(data []byte) error {
+func opaqueTest(data []byte) error {
 	var fn Function
 	var tid TaskID
 

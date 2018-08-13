@@ -13,8 +13,8 @@ func TestRRClient_simple(t *testing.T) {
 	end, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	srv1 := ConnTest()
-	srv2 := ConnTest()
+	srv1 := connTest()
+	srv2 := connTest()
 
 	defer srv1.Close()
 	defer srv2.Close()
@@ -35,19 +35,19 @@ func TestRRClient_simple(t *testing.T) {
 	clientSrv(srv1, "H:lap:3", "test 3", "3 tset", t)
 	clientSrv(srv2, "H:lap:4", "test 4", "4 tset", t)
 
-	if !valid_result(t, []byte("1 tset"), nil)(r1.Value()) {
+	if !validResult(t, []byte("1 tset"), nil)(r1.Value()) {
 		return
 	}
 
-	if !valid_result(t, []byte("2 tset"), nil)(r2.Value()) {
+	if !validResult(t, []byte("2 tset"), nil)(r2.Value()) {
 		return
 	}
 
-	if !valid_result(t, []byte("3 tset"), nil)(r3.Value()) {
+	if !validResult(t, []byte("3 tset"), nil)(r3.Value()) {
 		return
 	}
 
-	if !valid_result(t, []byte("4 tset"), nil)(r4.Value()) {
+	if !validResult(t, []byte("4 tset"), nil)(r4.Value()) {
 		return
 	}
 }
@@ -56,7 +56,7 @@ func TestRRClient_but_single(t *testing.T) {
 	end, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	srv1 := ConnTest()
+	srv1 := connTest()
 
 	defer srv1.Close()
 
@@ -74,15 +74,15 @@ func TestRRClient_but_single(t *testing.T) {
 	clientSrv(srv1, "H:lap:2", "test 2", "2 tset", t)
 	clientSrv(srv1, "H:lap:3", "test 3", "3 tset", t)
 
-	if !valid_result(t, []byte("1 tset"), nil)(r1.Value()) {
+	if !validResult(t, []byte("1 tset"), nil)(r1.Value()) {
 		return
 	}
 
-	if !valid_result(t, []byte("2 tset"), nil)(r2.Value()) {
+	if !validResult(t, []byte("2 tset"), nil)(r2.Value()) {
 		return
 	}
 
-	if !valid_result(t, []byte("3 tset"), nil)(r3.Value()) {
+	if !validResult(t, []byte("3 tset"), nil)(r3.Value()) {
 		return
 	}
 
@@ -94,9 +94,9 @@ func TestRRClient_unordered_result(t *testing.T) {
 	end, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	srv0 := ConnTest()
-	srv1 := ConnTest()
-	srv2 := ConnTest()
+	srv0 := connTest()
+	srv1 := connTest()
+	srv2 := connTest()
 	defer srv0.Close()
 	defer srv1.Close()
 	defer srv2.Close()
@@ -115,7 +115,7 @@ func TestRRClient_unordered_result(t *testing.T) {
 		for _, pre := range []int{1, 2, 3} {
 			r := cli.Submit(NewTask("reverse", []byte(fmt.Sprintf("test %02d", idx+pre*10))))
 			go func(pre, idx int, r Task, t *testing.T) {
-				if !valid_result(t, []byte(fmt.Sprintf("%02d tset", idx*10+pre)), nil)(r.Value()) {
+				if !validResult(t, []byte(fmt.Sprintf("%02d tset", idx*10+pre)), nil)(r.Value()) {
 					t.Error(fmt.Sprintf("wrong value for %02d", idx+pre*10))
 					return
 				}

@@ -32,8 +32,7 @@ func (f workWriter) Write(p []byte) (int, error) {
 	return f(p)
 }
 
-// create a new Worker
-// r_end is a channel to signal to the Worker to end the process
+// NewWorker instanciate a Worker
 func NewWorker(ctx context.Context, debug *log.Logger) Worker {
 	q := make(chan Message, 100)
 	w := new(worker)
@@ -41,16 +40,15 @@ func NewWorker(ctx context.Context, debug *log.Logger) Worker {
 	w.handlers = make(map[string]Job)
 	w.pool.new(q, ctx)
 
-	go worker_loop(w, debug)
+	go workerLoop(w, debug)
 
 	return w
 }
 
-//	Add a list of gearman server
-//	the gearman
+// AddServers add a pool of servers to a Worker
 func (w *worker) AddServers(servers ...Conn) Worker {
 	for _, server := range servers {
-		w.add_server(server)
+		w.addServer(server)
 	}
 	return w
 }
@@ -61,7 +59,7 @@ func (w *worker) AddHandler(name string, f Job) Worker {
 	w.handlers[name] = f
 	w.Unlock()
 
-	w.add_handler(name)
+	w.addHandler(name)
 	return w
 }
 
@@ -71,7 +69,7 @@ func (w *worker) DelHandler(name string) Worker {
 	delete(w.handlers, name)
 	w.Unlock()
 
-	w.del_handler(name)
+	w.delHandler(name)
 	return w
 }
 
@@ -81,7 +79,7 @@ func (w *worker) DelAllHandlers() Worker {
 	w.handlers = make(map[string]Job)
 	w.Unlock()
 
-	w.del_all_handlers()
+	w.delAllHandlers()
 
 	return w
 }
@@ -91,7 +89,7 @@ func (w *worker) Close() error {
 }
 
 func (w *worker) Receivers() (<-chan Message, context.Context) {
-	return w.m_queue, w.r_end
+	return w.m_queue, w.ctx
 }
 
 func (w *worker) GetHandler(name string) Job {
@@ -104,7 +102,7 @@ func (w *worker) GetHandler(name string) Job {
 	return FailJob
 }
 
-func isolated_Serve(job Job, req io.Reader, res, data io.Writer) (status bool, err error) {
+func isolatedServe(job Job, req io.Reader, res, data io.Writer) (status bool, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			status = false
@@ -124,14 +122,14 @@ func isolated_Serve(job Job, req io.Reader, res, data io.Writer) (status bool, e
 	return
 }
 
-func work_data(reply chan<- Packet, tid TaskID) io.Writer {
+func workData(reply chan<- Packet, tid TaskID) io.Writer {
 	return workWriter(func(p []byte) (n int, err error) {
 		reply <- BuildPacket(WORK_DATA_WRK, tid, Opacify(p))
 		return len(p), nil
 	})
 }
 
-func work_complete(reply chan<- Packet, tid TaskID) io.Writer {
+func workComplete(reply chan<- Packet, tid TaskID) io.Writer {
 	return workWriter(func(p []byte) (n int, err error) {
 		reply <- BuildPacket(WORK_COMPLETE_WRK, tid, Opacify(p))
 		return len(p), nil
@@ -140,7 +138,7 @@ func work_complete(reply chan<- Packet, tid TaskID) io.Writer {
 
 func run(job Job, input io.Reader, reply chan<- Packet, tid TaskID) {
 	res := new(bytes.Buffer)
-	status, err := isolated_Serve(job, input, res, work_data(reply, tid))
+	status, err := isolatedServe(job, input, res, workData(reply, tid))
 
 	switch {
 	case err == nil && status:
@@ -154,7 +152,7 @@ func run(job Job, input io.Reader, reply chan<- Packet, tid TaskID) {
 	}
 }
 
-func worker_loop(w Worker, dbg *log.Logger) {
+func workerLoop(w Worker, dbg *log.Logger) {
 	var tid TaskID
 	var err error
 
@@ -169,8 +167,8 @@ func worker_loop(w Worker, dbg *log.Logger) {
 
 			case NOOP:
 				msg.Server.CounterAdd(2)
-				msg.Reply <- grab_job
-				msg.Reply <- grab_job_uniq
+				msg.Reply <- grabJob
+				msg.Reply <- grabJobUniq
 				continue
 
 			case ECHO_RES:
@@ -197,7 +195,7 @@ func worker_loop(w Worker, dbg *log.Logger) {
 			}
 
 			if msg.Server.IsZeroCounter() {
-				msg.Reply <- pre_sleep
+				msg.Reply <- preSleep
 			}
 
 		case <-end.Done():

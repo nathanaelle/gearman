@@ -9,7 +9,7 @@ func TestSingleClient_simple(t *testing.T) {
 	end, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	srv := ConnTest()
+	srv := connTest()
 	defer srv.Close()
 
 	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
@@ -21,7 +21,7 @@ func TestSingleClient_simple(t *testing.T) {
 
 	clientSrv(srv, "H:lap:000", "test", "tset", t)
 
-	if !valid_result(t, []byte("tset"), nil)(r.Value()) {
+	if !validResult(t, []byte("tset"), nil)(r.Value()) {
 		return
 	}
 }
@@ -30,7 +30,7 @@ func TestSingleClient_unordered_result(t *testing.T) {
 	end, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	srv := ConnTest()
+	srv := connTest()
 	defer srv.Close()
 
 	//logger	:= log.New(os.Stderr, "logger: ", log.Lshortfile|log.Ltime)
@@ -60,15 +60,15 @@ func TestSingleClient_unordered_result(t *testing.T) {
 	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:3")), Opacify([]byte("3 tset"))))
 	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:1")), Opacify([]byte("1 tset"))))
 
-	if !valid_result(t, []byte("3 tset"), nil)(r3.Value()) {
+	if !validResult(t, []byte("3 tset"), nil)(r3.Value()) {
 		return
 	}
 
-	if !valid_result(t, []byte("2 tset"), nil)(r2.Value()) {
+	if !validResult(t, []byte("2 tset"), nil)(r2.Value()) {
 		return
 	}
 
-	if !valid_result(t, []byte("1 tset"), nil)(r1.Value()) {
+	if !validResult(t, []byte("1 tset"), nil)(r1.Value()) {
 		return
 	}
 }

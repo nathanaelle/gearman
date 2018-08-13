@@ -1,48 +1,50 @@
-package	gearman // import "github.com/nathanaelle/gearman"
+package gearman // import "github.com/nathanaelle/gearman"
 
-import	(
+import (
 	"bytes"
-	"errors"
 	"encoding/base64"
+	"errors"
 )
 
-
-type	(
+type (
+	// MarshalerGearman describe methods needed to marshal a interface to a []byte
 	MarshalerGearman interface {
-		MarshalGearman() ([]byte,error)
-		Len()	int
+		MarshalGearman() ([]byte, error)
+		Len() int
 	}
 
+	// UnmarshalerGearman describe methods needed to unmarshal a []byte to an interface
 	UnmarshalerGearman interface {
 		UnmarshalGearman([]byte) error
 		Cast(Opaque) error
 	}
 
-	Opaque		interface {
+	// Opaque describe an opaque data attribute to a gearman Function
+	Opaque interface {
 		MarshalerGearman
 		UnmarshalerGearman
-		Bytes()	[]byte
+		Bytes() []byte
 	}
 
-	TaskID		[]byte
-	TaskMapID	[64]byte
+	// TaskID is used as the ID of a gearman Task
+	TaskID    []byte
+	TaskMapID [64]byte
 
-	Function	[]byte
-	ClientId	[]byte
+	Function []byte
 
+	// TaskID is used as the ID of a gearman Task
+	ClientID []byte
 
-	opaque		[]byte
+	opaque []byte
 
-	opaque0size	struct {}
+	opaque0size struct{}
 )
 
-var empty_opaque	*opaque0size = &opaque0size{}
-var CastOpaqueAsOpaqueError	error	= errors.New("Can't cast Opaque as Opaque")
-
+var emptyOpaque Opaque = &opaque0size{}
 
 func Opacify(b []byte) Opaque {
 	if len(b) == 0 {
-		return empty_opaque
+		return emptyOpaque
 	}
 
 	o := opaque(b)
@@ -50,126 +52,127 @@ func Opacify(b []byte) Opaque {
 	return &o
 }
 
-func (o *opaque)UnmarshalGearman(d []byte) error {
+func (o *opaque) UnmarshalGearman(d []byte) error {
 	*o = d
-	return	nil
+	return nil
 }
 
-func (fn *opaque)Cast(o Opaque) error {
-	return	CastOpaqueAsOpaqueError
+func (o *opaque) Cast(opq Opaque) error {
+	return CastOpaqueAsOpaqueError
 }
 
-func (o opaque)MarshalGearman() ([]byte,error) {
+func (o opaque) MarshalGearman() ([]byte, error) {
 	return o.Bytes(), nil
 }
 
-func (o opaque)Bytes()	[]byte {
-	return	[]byte(o)
+func (o opaque) Bytes() []byte {
+	return []byte(o)
 }
 
-func (o opaque)Len() int {
-	return	len(o.Bytes())
+func (o opaque) Len() int {
+	return len(o.Bytes())
 }
 
-
-
-
-
-func (_ *opaque0size)UnmarshalGearman(d []byte) error {
+func (o *opaque0size) UnmarshalGearman(d []byte) error {
 	if len(d) > 0 {
 		return errors.New("empty_opaque can't unmarshal data")
 	}
-	return	nil
+	return nil
 }
 
-func (fn *opaque0size)Cast(o Opaque) error {
-	return	CastOpaqueAsOpaqueError
+func (o *opaque0size) Cast(opq Opaque) error {
+	return CastOpaqueAsOpaqueError
 }
 
-func (_ opaque0size)MarshalGearman() ([]byte,error) {
+func (o opaque0size) MarshalGearman() ([]byte, error) {
 	return []byte{}, nil
 }
 
-func (_ opaque0size)Bytes() []byte {
+func (o opaque0size) Bytes() []byte {
 	return []byte{}
 }
 
-func (_ opaque0size)Len() int {
-	return	0
+func (o opaque0size) Len() int {
+	return 0
 }
 
-
-
-
-
-func (tid *TaskID)Cast(o Opaque) error {
-	return	tid.UnmarshalGearman(o.Bytes())
+// Cast is UnmarshalerGearman.Cast
+func (tid *TaskID) Cast(o Opaque) error {
+	return tid.UnmarshalGearman(o.Bytes())
 }
 
-func (tid *TaskID)UnmarshalGearman(d []byte) error {
+// UnmarshalGearman is UnmarshalerGearman.UnmarshalGearman
+func (tid *TaskID) UnmarshalGearman(d []byte) error {
 	if len(d) > 64 {
-		return	errors.New("too Long TaskID")
+		return errors.New("too Long TaskID")
 	}
 	*tid = TaskID(d)
-	return	nil
+	return nil
 }
 
-func (tid TaskID)MarshalGearman() ([]byte,error) {
+// MarshalGearman is MarshalerGearman.MarshalGearman
+func (tid TaskID) MarshalGearman() ([]byte, error) {
 	if len([]byte(tid)) > 64 {
 		return nil, errors.New("too Long TaskID")
 	}
-	return	[]byte(tid),nil
+	return []byte(tid), nil
 }
 
-func (tid TaskID)Len() int {
-	return	len([]byte(tid))
+// Len is MarshalerGearman.Len
+func (tid TaskID) Len() int {
+	return len([]byte(tid))
 }
 
-func (tid TaskID)String() string {
-	return	base64.RawURLEncoding.EncodeToString([]byte(tid))
+func (tid TaskID) String() string {
+	return base64.RawURLEncoding.EncodeToString([]byte(tid))
 }
 
-
-
-func (fn *Function)UnmarshalGearman(d []byte) error {
+// UnmarshalGearman is UnmarshalerGearman.UnmarshalGearman
+func (fn *Function) UnmarshalGearman(d []byte) error {
 	*fn = Function(d)
-	return	nil
+	return nil
 }
 
-func (fn *Function)Cast(o Opaque) error {
-	return	fn.UnmarshalGearman(o.Bytes())
+// Cast is UnmarshalerGearman.Cast
+func (fn *Function) Cast(o Opaque) error {
+	return fn.UnmarshalGearman(o.Bytes())
 }
 
-func (fn Function)MarshalGearman() ([]byte,error) {
+// MarshalGearman is MarshalerGearman.MarshalGearman
+func (fn Function) MarshalGearman() ([]byte, error) {
 	return []byte(fn), nil
 }
 
-func (fn Function)Len() int {
-	return	len([]byte(fn))
+// Len is MarshalerGearman.Len
+func (fn Function) Len() int {
+	return len([]byte(fn))
 }
 
-func (fn Function)String() string {
-	return	base64.RawURLEncoding.EncodeToString([]byte(fn))
+func (fn Function) String() string {
+	return base64.RawURLEncoding.EncodeToString([]byte(fn))
 }
 
-func (f1 Function)IsEqual(f2 Function) bool {
-	return	bytes.Equal(f1, f2)
+func (fn Function) IsEqual(f2 Function) bool {
+	return bytes.Equal(fn, f2)
 }
 
-func (clid *ClientId)UnmarshalGearman(d []byte) error {
+// UnmarshalGearman is UnmarshalerGearman.UnmarshalGearman
+func (clid *ClientID) UnmarshalGearman(d []byte) error {
 	*clid = d
-	return	nil
+	return nil
 }
 
-func (clid *ClientId)Cast(o Opaque) error {
-	return	clid.UnmarshalGearman(o.Bytes())
+// Cast is UnmarshalerGearman.Cast
+func (clid *ClientID) Cast(o Opaque) error {
+	return clid.UnmarshalGearman(o.Bytes())
 }
 
-
-func (clid ClientId)MarshalGearman() ([]byte,error) {
+// MarshalGearman is MarshalerGearman.MarshalGearman
+func (clid ClientID) MarshalGearman() ([]byte, error) {
 	return []byte(clid), nil
 }
 
-func (clid ClientId)Len() int {
-	return	len([]byte(clid))
+// Len is MarshalerGearman.Len
+func (clid ClientID) Len() int {
+	return len([]byte(clid))
 }

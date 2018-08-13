@@ -5,6 +5,7 @@ import (
 )
 
 type (
+	// Command is a low level command for the gearman protocol
 	Command uint64
 )
 
@@ -208,6 +209,7 @@ func (cmd Command) Borrow(p Packet) (Packet, error) {
 	return nil, &BorrowError{cmd, p}
 }
 
+// Unmarshal decodes a payload to a Packet
 func (cmd Command) Unmarshal(payload []byte) (Packet, error) {
 	switch cmd {
 	case RESET_ABILITIES, PRE_SLEEP, NOOP, ALL_YOURS,

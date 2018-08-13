@@ -31,7 +31,7 @@ func SingleServerClient(ctx context.Context, debug *log.Logger) Client {
 }
 
 func (c *singleServer) receivers() (<-chan Message, context.Context) {
-	return c.mQueue, c.r_end
+	return c.mQueue, c.ctx
 }
 
 func (c *singleServer) Close() error {
@@ -51,7 +51,7 @@ func (c *singleServer) AddServers(servers ...Conn) Client {
 	c.configured = true
 
 	for _, server := range servers {
-		c.add_server(server)
+		c.addServer(server)
 	}
 	return c
 }
@@ -62,8 +62,8 @@ func (c *singleServer) Submit(req Task) Task {
 
 	c.reqQueue = append(c.reqQueue, req)
 
-	for _, s := range c.list_servers() {
-		c.send_to(s, req.Packet())
+	for _, s := range c.listServers() {
+		c.sendTo(s, req.Packet())
 	}
 
 	return req
