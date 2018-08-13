@@ -156,11 +156,11 @@ func workerLoop(w Worker, dbg *log.Logger) {
 	var tid TaskID
 	var err error
 
-	m_q, end := w.Receivers()
+	msgQueue, end := w.Receivers()
 
 	for {
 		select {
-		case msg := <-m_q:
+		case msg := <-msgQueue:
 			switch msg.Pkt.Cmd() {
 			case NO_JOB:
 				msg.Server.CounterAdd(-1)

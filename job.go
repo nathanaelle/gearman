@@ -6,8 +6,8 @@ import (
 )
 
 type (
+	// Job describe a job exposed by Worker
 	Job interface {
-		// this describe a Job
 		Serve(payload io.Reader, reply, data io.Writer, progress chan<- int) (success bool, err error)
 	}
 

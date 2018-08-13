@@ -51,7 +51,7 @@ var validPacket = []packetTest{
 	{
 		[]byte{0, 0x52, 0x45, 0x51, 0, 0, 0, 0x03, 0, 0, 0, 0x0d, 'i', 'n', 't', 'e', 'r', 'n', 'a', 'l', 0, 'e', 'c', 'h', 'o'},
 		nil,
-		PayloadInEmptyPacketError,
+		ErrPayloadInEmptyPacket,
 		0,
 	},
 	{

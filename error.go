@@ -27,11 +27,11 @@ type (
 )
 
 var (
-	unknownError              error = errors.New("Unspecified Error happens")
-	BuffTooSmallError         error = errors.New("Buffer is Too Small")
-	PayloadInEmptyPacketError error = errors.New("Found payload in expected empty packet")
-	TextProtocolError         error = errors.New("Text Protocol is unsupported")
-	CastOpaqueAsOpaqueError   error = errors.New("Can't cast Opaque as Opaque")
+	ErrUnknown              error = errors.New("Unspecified Error happens")
+	ErrBuffTooSmall         error = errors.New("Buffer is Too Small")
+	ErrPayloadInEmptyPacket error = errors.New("Found payload in expected empty packet")
+	ErrTextProtocol         error = errors.New("Text Protocol is unsupported")
+	ErrCastOpaqueAsOpaque   error = errors.New("Can't cast Opaque as Opaque")
 )
 
 func (e *ExceptionError) Error() string {

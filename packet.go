@@ -63,7 +63,7 @@ var (
 
 func newPkt0size(cmd Command, size int) (Packet, error) {
 	if size != 0 {
-		return nil, PayloadInEmptyPacketError
+		return nil, ErrPayloadInEmptyPacket
 	}
 	return &pkt0size{cmd}, nil
 }
@@ -105,7 +105,7 @@ func (pl *pkt0size) Marshal() []byte {
 
 func (pl *pkt0size) Encode(buff []byte) (int, error) {
 	if len(buff) < 12 {
-		return 0, BuffTooSmallError
+		return 0, ErrBuffTooSmall
 	}
 	uint642be(buff[0:8], uint64(pl.cmd))
 	uint322be(buff[8:12], 0)
@@ -178,7 +178,7 @@ func (pl *pkt1len) Marshal() []byte {
 
 func (pl *pkt1len) Encode(buff []byte) (int, error) {
 	if len(buff) < int(pl.size+12) {
-		return 0, BuffTooSmallError
+		return 0, ErrBuffTooSmall
 	}
 	uint642be(buff[0:8], uint64(pl.cmd))
 	uint322be(buff[8:12], pl.size)
@@ -295,7 +295,7 @@ func (pl *pktcommon) Marshal() []byte {
 
 func (pl *pktcommon) Encode(buff []byte) (int, error) {
 	if len(buff) < int(pl.size+12) {
-		return 0, BuffTooSmallError
+		return 0, ErrBuffTooSmall
 	}
 	uint642be(buff[0:8], uint64(pl.cmd))
 	uint322be(buff[8:12], pl.size)

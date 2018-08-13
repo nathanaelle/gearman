@@ -32,7 +32,7 @@ type (
 
 	Function []byte
 
-	// TaskID is used as the ID of a gearman Task
+	// ClientID is used as the ID of a client in a gearman Task
 	ClientID []byte
 
 	opaque []byte
@@ -58,7 +58,7 @@ func (o *opaque) UnmarshalGearman(d []byte) error {
 }
 
 func (o *opaque) Cast(opq Opaque) error {
-	return CastOpaqueAsOpaqueError
+	return ErrCastOpaqueAsOpaque
 }
 
 func (o opaque) MarshalGearman() ([]byte, error) {
@@ -81,7 +81,7 @@ func (o *opaque0size) UnmarshalGearman(d []byte) error {
 }
 
 func (o *opaque0size) Cast(opq Opaque) error {
-	return CastOpaqueAsOpaqueError
+	return ErrCastOpaqueAsOpaque
 }
 
 func (o opaque0size) MarshalGearman() ([]byte, error) {

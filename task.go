@@ -7,6 +7,7 @@ import (
 )
 
 type (
+	// Task describe a requested task by a Client
 	Task interface {
 		Handle(p Packet)
 		Value() ([]byte, error)
@@ -80,7 +81,7 @@ func (r *task) Handle(p Packet) {
 		r.solved.Done()
 
 	case WORK_FAIL:
-		r.err = unknownError
+		r.err = ErrUnknown
 		r.solved.Done()
 
 	case WORK_EXCEPTION:
@@ -144,7 +145,7 @@ func (r *echoTask) Handle(p Packet) {
 		r.solved.Done()
 
 	default:
-		r.err = unknownError
+		r.err = ErrUnknown
 		r.solved.Done()
 	}
 }
