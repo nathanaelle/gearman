@@ -23,7 +23,7 @@ func SingleServerClient(ctx context.Context, debug *log.Logger) Client {
 	c.mQueue = make(chan Message, 10)
 	c.jobs = make(map[string]Task)
 	c.climutex = new(sync.Mutex)
-	c.pool.new(c.mQueue, ctx)
+	c.pool.newPool(ctx, c.mQueue)
 
 	go clientLoop(c, debug)
 

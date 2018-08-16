@@ -38,7 +38,7 @@ func NewWorker(ctx context.Context, debug *log.Logger) Worker {
 	w := new(worker)
 	w.m_queue = q
 	w.handlers = make(map[string]Job)
-	w.pool.new(q, ctx)
+	w.pool.newPool(ctx, q)
 
 	go workerLoop(w, debug)
 

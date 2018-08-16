@@ -28,7 +28,7 @@ type pool struct {
 	handlers map[string]int32
 }
 
-func (p *pool) new(msgQueue chan<- Message, ctx context.Context) {
+func (p *pool) newPool(ctx context.Context, msgQueue chan<- Message) {
 	p.pool = make(map[Conn]chan Packet)
 	p.handlers = make(map[string]int32)
 	p.msgQueue = msgQueue
