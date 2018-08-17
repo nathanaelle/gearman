@@ -7,10 +7,9 @@
 ### Worker Example
 
 ```
-end, cancel := context.WithCancel(context.Background())
-defer cancel()
+ctx, cancel := context.WithCancel(context.Background())
 
-w	:= gearman.NewWorker(end, nil)
+w := gearman.NewWorker(ctx, nil)
 w.AddServers( gearman.NetConn("tcp","localhost:4730") )
 
 w.AddHandler("reverse", gearman.JobHandler(func(payload io.Reader,reply io.Writer) (error){
@@ -25,20 +24,19 @@ w.AddHandler("reverse", gearman.JobHandler(func(payload io.Reader,reply io.Write
         return nil
 } ))
 
-<-end
+<-ctx.Done()
 ```
 
 ### Client Example
 
 ```
-end, cancel := context.WithCancel(context.Background())
+ctx, cancel := context.WithCancel(context.Background())
 defer cancel()
 
-w	:= gearman.SingleServerClient(end, nil)
+w := gearman.SingleServerClient(ctx, nil)
 w.AddServers( gearman.NetConn("tcp","localhost:4730") )
 
 bytes_val, err_if_any := cli.Submit( NewTask("some task", []byte("some byte encoded payload")) ).Value()
-
 ```
 
 ## Features
@@ -70,7 +68,6 @@ bytes_val, err_if_any := cli.Submit( NewTask("some task", []byte("some byte enco
 
 ## Benchmarks
 
-
 ### PacketFactory on LoopReader
 
 ```
@@ -86,7 +83,6 @@ BenchmarkUnmarshalPkt0size-4        	100000000	        22.7 ns/op	       8 B/op	
 BenchmarkUnmarshalPkt1len-4         	30000000	        45.2 ns/op	      48 B/op	       1 allocs/op
 BenchmarkUnmarshalPktcommon-4       	20000000	       112   ns/op	      96 B/op	       2 allocs/op
 ```
-
 
 ### Marshal
 
