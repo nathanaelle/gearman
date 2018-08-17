@@ -47,7 +47,7 @@ func (pf *packetFactory) readHint(expected int) (err error) {
 
 		old := pf.b
 		pf.b = make([]byte, len(old), newSize)
-		copy(pf.b[0:len(old)], old[0:len(old)])
+		copy(pf.b[0:len(old)], old[0:])
 	}
 
 	var n int
