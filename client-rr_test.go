@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
 func TestRRClient_simple(t *testing.T) {
@@ -128,11 +130,11 @@ func TestRRClient_unordered_result(t *testing.T) {
 }
 
 func clientSrv(srv *testConn, taskid, expected, answer string, t *testing.T) {
-	if !validStep(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte(expected)))) {
+	if !validStep(t, srv.Received(), protocol.BuildPacket(protocol.SubmitJob, protocol.Opacify([]byte("reverse")), protocol.Opacify([]byte("")), protocol.Opacify([]byte(expected)))) {
 		return
 	}
-	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte(taskid))))
-	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte(taskid)), Opacify([]byte(answer))))
+	srv.Send(protocol.BuildPacket(protocol.JobCreated, protocol.Opacify([]byte(taskid))))
+	srv.Send(protocol.BuildPacket(protocol.WorkComplete, protocol.Opacify([]byte(taskid)), protocol.Opacify([]byte(answer))))
 }
 
 func rrclientSrv(srv *testConn, prefix string, wg *sync.WaitGroup, t *testing.T) {
@@ -141,13 +143,13 @@ func rrclientSrv(srv *testConn, prefix string, wg *sync.WaitGroup, t *testing.T)
 	for idx := byte('0'); idx <= '9'; idx++ {
 		step := string([]byte{idx})
 		res := srv.Received()
-		if !validStep(t, res, BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test "+prefix+step)))) {
+		if !validStep(t, res, protocol.BuildPacket(protocol.SubmitJob, protocol.Opacify([]byte("reverse")), protocol.Opacify([]byte("")), protocol.Opacify([]byte("test "+prefix+step)))) {
 			return
 		}
 		taskid := []byte("GPREF:" + prefix + ":" + step)
-		srv.Send(BuildPacket(JOB_CREATED, Opacify(taskid)))
+		srv.Send(protocol.BuildPacket(protocol.JobCreated, protocol.Opacify(taskid)))
 
 		time.Sleep(time.Millisecond * time.Duration(10*rand.Intn(10)))
-		srv.Send(BuildPacket(WORK_COMPLETE, Opacify(taskid), Opacify([]byte(step+prefix+" tset"))))
+		srv.Send(protocol.BuildPacket(protocol.WorkComplete, protocol.Opacify(taskid), protocol.Opacify([]byte(step+prefix+" tset"))))
 	}
 }

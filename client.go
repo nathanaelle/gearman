@@ -3,6 +3,8 @@ package gearman // import "github.com/nathanaelle/gearman"
 import (
 	"context"
 	"log"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
 type (
@@ -38,22 +40,22 @@ func clientLoop(c Client, dbg *log.Logger) {
 
 			debug(dbg, "CLI\t%s\n", msg.Pkt)
 			switch msg.Pkt.Cmd() {
-			case NOOP:
+			case protocol.Noop:
 
-			case ECHO_RES:
+			case protocol.EchoRes:
 				debug(dbg, "CLI\tECHO [%s]\n", string(msg.Pkt.At(0).Bytes()))
 
-			case ERROR:
+			case protocol.Error:
 				debug(dbg, "CLI\tERR [%s] [%s]\n", msg.Pkt.At(0).Bytes(), string(msg.Pkt.At(1).Bytes()))
 
-			case JOB_CREATED:
+			case protocol.JobCreated:
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
-					debug(dbg, "CLI\tJOB_CREATED TID [%s] err : %v\n", string(msg.Pkt.At(0).Bytes()), err)
+					debug(dbg, "CLI\tprotocol.JobCreated TID [%s] err : %v\n", string(msg.Pkt.At(0).Bytes()), err)
 					panic(err)
 				}
 				c.assignTask(tid)
 
-			case WORK_DATA, WORK_WARNING, WORK_STATUS:
+			case protocol.WorkData, protocol.WorkWarning, protocol.WorkStatus:
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					debug(dbg, "CLI\t%s TID [%s] err : %v\n", msg.Pkt.Cmd(), string(msg.Pkt.At(0).Bytes()), err)
 					panic(err)
@@ -61,7 +63,7 @@ func clientLoop(c Client, dbg *log.Logger) {
 
 				c.getTask(tid).Handle(msg.Pkt)
 
-			case WORK_COMPLETE, WORK_FAIL, WORK_EXCEPTION:
+			case protocol.WorkComplete, protocol.WorkFail, protocol.WorkException:
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					debug(dbg, "CLI\t%s TID [%s] err : %v\n", msg.Pkt.Cmd(), string(msg.Pkt.At(0).Bytes()), err)
 					panic(err)
@@ -69,10 +71,10 @@ func clientLoop(c Client, dbg *log.Logger) {
 
 				c.extractTask(tid).Handle(msg.Pkt)
 
-			case STATUS_RES:
+			case protocol.StatusRes:
 				panic("status_res not wrote")
 
-			case OPTION_RES:
+			case protocol.OptionRes:
 				panic("option_res not wrote")
 
 			default:

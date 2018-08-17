@@ -5,13 +5,15 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
 type (
 	Message struct {
-		Reply  chan<- Packet
+		Reply  chan<- protocol.Packet
 		Server Conn
-		Pkt    Packet
+		Pkt    protocol.Packet
 	}
 )
 
@@ -22,14 +24,14 @@ var (
 
 type pool struct {
 	sync.Mutex
-	pool     map[Conn]chan Packet
+	pool     map[Conn]chan protocol.Packet
 	msgQueue chan<- Message
 	ctx      context.Context
 	handlers map[string]int32
 }
 
 func (p *pool) newPool(ctx context.Context, msgQueue chan<- Message) {
-	p.pool = make(map[Conn]chan Packet)
+	p.pool = make(map[Conn]chan protocol.Packet)
 	p.handlers = make(map[string]int32)
 	p.msgQueue = msgQueue
 	p.ctx = ctx
@@ -43,7 +45,7 @@ func (p *pool) addServer(server Conn) error {
 		return errors.New("server already exists: " + server.String())
 	}
 
-	pktchan := make(chan Packet, 100)
+	pktchan := make(chan protocol.Packet, 100)
 	p.pool[server] = pktchan
 	p.Unlock()
 
@@ -74,7 +76,7 @@ func (p *pool) addHandler(h string) {
 		p.handlers[h] = 0
 	}
 
-	canDo := BuildPacket(CAN_DO, Opacify([]byte(h)))
+	canDo := protocol.BuildPacket(protocol.CanDo, protocol.Opacify([]byte(h)))
 	for _, server := range p.pool {
 		server <- canDo
 	}
@@ -84,7 +86,7 @@ func (p *pool) delHandler(h string) {
 	p.Lock()
 	defer p.Unlock()
 
-	cantDo := BuildPacket(CANT_DO, Opacify([]byte(h)))
+	cantDo := protocol.BuildPacket(protocol.CantDo, protocol.Opacify([]byte(h)))
 	for _, server := range p.pool {
 		server <- cantDo
 	}
@@ -95,14 +97,14 @@ func (p *pool) delAllHandlers() {
 	defer p.Unlock()
 
 	for h := range p.handlers {
-		cantDo := BuildPacket(CANT_DO, Opacify([]byte(h)))
+		cantDo := protocol.BuildPacket(protocol.CantDo, protocol.Opacify([]byte(h)))
 		for _, server := range p.pool {
 			server <- cantDo
 		}
 	}
 }
 
-func (p *pool) sendTo(server Conn, pkt Packet) {
+func (p *pool) sendTo(server Conn, pkt protocol.Packet) {
 	p.Lock()
 	defer p.Unlock()
 
@@ -111,25 +113,25 @@ func (p *pool) sendTo(server Conn, pkt Packet) {
 	}
 }
 
-func (p *pool) reconnect(server Conn, pktchan chan Packet) {
+func (p *pool) reconnect(server Conn, pktchan chan protocol.Packet) {
 	p.Lock()
 	defer p.Unlock()
 
 	server.Redial()
 
 	for h := range p.handlers {
-		pktchan <- BuildPacket(CAN_DO, Opacify([]byte(h)))
+		pktchan <- protocol.BuildPacket(protocol.CanDo, protocol.Opacify([]byte(h)))
 	}
 
-	p.msgQueue <- Message{pktchan, server, internalEchoPacket}
+	p.msgQueue <- Message{pktchan, server, protocol.PktInternalEchoPacket}
 }
 
-func (p *pool) rloop(server Conn, pktchan chan Packet) {
+func (p *pool) rloop(server Conn, pktchan chan protocol.Packet) {
 	var err error
-	var pkt Packet
+	var pkt protocol.Packet
 	defer server.Close()
 
-	pf := NewPacketFactory(server, 1<<20)
+	pf := protocol.NewPacketFactory(server, 1<<20)
 
 	for {
 		select {
@@ -157,14 +159,14 @@ func (p *pool) rloop(server Conn, pktchan chan Packet) {
 	}
 }
 
-func (p *pool) wloop(server Conn, sendTo chan Packet) {
+func (p *pool) wloop(server Conn, sendTo chan protocol.Packet) {
 	var err error
 	defer server.Close()
 
 	for {
 		select {
 		case <-p.ctx.Done():
-			resetAbilities.WriteTo(server)
+			protocol.PktResetAbilities.WriteTo(server)
 			return
 
 		case data := <-sendTo:

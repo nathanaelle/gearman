@@ -6,6 +6,8 @@ import (
 	"errors"
 	"io"
 	"log"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
 type (
@@ -122,33 +124,33 @@ func isolatedServe(job Job, req io.Reader, res, data io.Writer) (status bool, er
 	return
 }
 
-func workData(reply chan<- Packet, tid TaskID) io.Writer {
+func workData(reply chan<- protocol.Packet, tid TaskID) io.Writer {
 	return workWriter(func(p []byte) (n int, err error) {
-		reply <- BuildPacket(WORK_DATA_WRK, tid, Opacify(p))
+		reply <- protocol.BuildPacket(protocol.WorkDataWorker, tid, protocol.Opacify(p))
 		return len(p), nil
 	})
 }
 
-func workComplete(reply chan<- Packet, tid TaskID) io.Writer {
+func workComplete(reply chan<- protocol.Packet, tid TaskID) io.Writer {
 	return workWriter(func(p []byte) (n int, err error) {
-		reply <- BuildPacket(WORK_COMPLETE_WRK, tid, Opacify(p))
+		reply <- protocol.BuildPacket(protocol.WorkCompleteWorker, tid, protocol.Opacify(p))
 		return len(p), nil
 	})
 }
 
-func run(job Job, input io.Reader, reply chan<- Packet, tid TaskID) {
+func run(job Job, input io.Reader, reply chan<- protocol.Packet, tid TaskID) {
 	res := new(bytes.Buffer)
 	status, err := isolatedServe(job, input, res, workData(reply, tid))
 
 	switch {
 	case err == nil && status:
-		reply <- BuildPacket(WORK_COMPLETE_WRK, tid, Opacify(res.Bytes()))
+		reply <- protocol.BuildPacket(protocol.WorkCompleteWorker, tid, protocol.Opacify(res.Bytes()))
 
 	case err == nil && !status:
-		reply <- BuildPacket(WORK_FAIL_WRK, tid)
+		reply <- protocol.BuildPacket(protocol.WorkFailWorker, tid)
 
 	case err != nil:
-		reply <- BuildPacket(WORK_EXCEPTION_WRK, tid, Opacify([]byte(err.Error())))
+		reply <- protocol.BuildPacket(protocol.WorkExceptionWorker, tid, protocol.Opacify([]byte(err.Error())))
 	}
 }
 
@@ -162,40 +164,41 @@ func workerLoop(w Worker, dbg *log.Logger) {
 		select {
 		case msg := <-msgQueue:
 			switch msg.Pkt.Cmd() {
-			case NO_JOB:
+			case protocol.NoJob:
 				msg.Server.CounterAdd(-1)
 
-			case NOOP:
+			case protocol.Noop:
 				msg.Server.CounterAdd(2)
-				msg.Reply <- grabJob
-				msg.Reply <- grabJobUniq
+				msg.Reply <- protocol.PktGrabJob
+				msg.Reply <- protocol.PktGrabJobUniq
 				continue
 
-			case ECHO_RES:
+			case protocol.EchoRes:
 				debug(dbg, "WRKR\tECHO\t[%v]\n", msg.Pkt.At(0))
 
-			case JOB_ASSIGN:
+			case protocol.JobAssign:
 				msg.Server.CounterAdd(-1)
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					panic(err)
 				}
 				go run(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
 
-			case JOB_ASSIGN_UNIQ:
+			case protocol.JobAssignUniq:
 				msg.Server.CounterAdd(-1)
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					panic(err)
 				}
 				go run(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
 
-			case ERROR:
+			case protocol.Error:
 				debug(dbg, "WRKR\tERR\t[%s] [%s]\n", msg.Pkt.At(0).Bytes(), string(msg.Pkt.At(1).Bytes()))
+
 			default:
 				debug(dbg, "WRKR\t%s\n", msg.Pkt)
 			}
 
 			if msg.Server.IsZeroCounter() {
-				msg.Reply <- preSleep
+				msg.Reply <- protocol.PktPreSleep
 			}
 
 		case <-end.Done():

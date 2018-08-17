@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
 func Test_Opaque(t *testing.T) {
@@ -27,7 +29,7 @@ func opaqueTest(data []byte) error {
 	var fn Function
 	var tid TaskID
 
-	opaq := Opacify(data)
+	opaq := protocol.Opacify(data)
 	err := fn.Cast(opaq)
 	if err != nil {
 		return err

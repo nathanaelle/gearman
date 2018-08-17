@@ -5,6 +5,8 @@ import (
 	"io"
 	"net"
 	"testing"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
 func trivialWorker(end context.Context, t *testing.T, srv ...Conn) {
@@ -35,29 +37,29 @@ func Test_Worker_simple(t *testing.T) {
 	srv := connTest()
 	go trivialWorker(end, t, srv)
 
-	if !validAnyStep(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), preSleep) {
+	if !validAnyStep(t, srv.Received(), protocol.BuildPacket(protocol.CanDo, protocol.Opacify([]byte("reverse"))), protocol.PktPreSleep) {
 		return
 	}
 
-	if !validAnyStep(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), preSleep) {
+	if !validAnyStep(t, srv.Received(), protocol.BuildPacket(protocol.CanDo, protocol.Opacify([]byte("reverse"))), protocol.PktPreSleep) {
 		return
 	}
 
-	srv.Send(noop)
-	if !validStep(t, srv.Received(), grabJob) {
+	srv.Send(protocol.PktNoop)
+	if !validStep(t, srv.Received(), protocol.PktGrabJob) {
 		return
 	}
 
-	if !validStep(t, srv.Received(), grabJobUniq) {
+	if !validStep(t, srv.Received(), protocol.PktGrabJobUniq) {
 		return
 	}
 
-	srv.Send(noJob)
-	srv.Send(BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test"))))
-	if !validStep(t, srv.Received(), preSleep) {
+	srv.Send(protocol.PktNoJob)
+	srv.Send(protocol.BuildPacket(protocol.JobAssign, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("reverse")), protocol.Opacify([]byte("test"))))
+	if !validStep(t, srv.Received(), protocol.PktPreSleep) {
 		return
 	}
-	if !validStep(t, srv.Received(), BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("tset")))) {
+	if !validStep(t, srv.Received(), protocol.BuildPacket(protocol.WorkCompleteWorker, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("tset")))) {
 		return
 	}
 }
@@ -71,50 +73,50 @@ func Test_Worker_two_servers(t *testing.T) {
 	go trivialWorker(end, t, srv1, srv2)
 
 	for _, srv := range []*testConn{srv1, srv2} {
-		if !validAnyStep(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), preSleep) {
+		if !validAnyStep(t, srv.Received(), protocol.BuildPacket(protocol.CanDo, protocol.Opacify([]byte("reverse"))), protocol.PktPreSleep) {
 			return
 		}
 
-		if !validAnyStep(t, srv.Received(), BuildPacket(CAN_DO, Opacify([]byte("reverse"))), preSleep) {
+		if !validAnyStep(t, srv.Received(), protocol.BuildPacket(protocol.CanDo, protocol.Opacify([]byte("reverse"))), protocol.PktPreSleep) {
 			return
 		}
 	}
 
-	srv2.Send(noop)
-	srv1.Send(noop)
+	srv2.Send(protocol.PktNoop)
+	srv1.Send(protocol.PktNoop)
 
 	for _, srv := range []*testConn{srv1, srv2} {
-		if !validStep(t, srv.Received(), grabJob) {
+		if !validStep(t, srv.Received(), protocol.PktGrabJob) {
 			return
 		}
-		if !validStep(t, srv.Received(), grabJobUniq) {
+		if !validStep(t, srv.Received(), protocol.PktGrabJobUniq) {
 			return
 		}
 	}
 
-	srv1.Send(noJob)
-	srv2.Send(noJob)
+	srv1.Send(protocol.PktNoJob)
+	srv2.Send(protocol.PktNoJob)
 
-	srv1.Send(BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test srv1"))))
-	srv2.Send(BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test srv2"))))
+	srv1.Send(protocol.BuildPacket(protocol.JobAssign, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("reverse")), protocol.Opacify([]byte("test srv1"))))
+	srv2.Send(protocol.BuildPacket(protocol.JobAssign, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("reverse")), protocol.Opacify([]byte("test srv2"))))
 
 	rec := srv1.Received()
-	if !validAnyStep(t, rec, preSleep, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("1vrs tset")))) {
+	if !validAnyStep(t, rec, protocol.PktPreSleep, protocol.BuildPacket(protocol.WorkCompleteWorker, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("1vrs tset")))) {
 		return
 	}
 
 	rec = srv1.Received()
-	if !validAnyStep(t, rec, preSleep, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("1vrs tset")))) {
+	if !validAnyStep(t, rec, protocol.PktPreSleep, protocol.BuildPacket(protocol.WorkCompleteWorker, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("1vrs tset")))) {
 		return
 	}
 
 	rec = srv2.Received()
-	if !validAnyStep(t, rec, preSleep, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("2vrs tset")))) {
+	if !validAnyStep(t, rec, protocol.PktPreSleep, protocol.BuildPacket(protocol.WorkCompleteWorker, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("2vrs tset")))) {
 		return
 	}
 
 	rec = srv2.Received()
-	if !validAnyStep(t, rec, preSleep, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("2vrs tset")))) {
+	if !validAnyStep(t, rec, protocol.PktPreSleep, protocol.BuildPacket(protocol.WorkCompleteWorker, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("2vrs tset")))) {
 		return
 	}
 }
@@ -156,33 +158,33 @@ func Test_Worker_netcon(t *testing.T) {
 			go func(c net.Conn) {
 				defer c.Close()
 
-				pf := NewPacketFactory(c, 1<<16)
-				if !packetReceivedIsAny(t, pf, BuildPacket(CAN_DO, Opacify([]byte("reverse"))), preSleep) {
+				pf := protocol.NewPacketFactory(c, 1<<16)
+				if !packetReceivedIsAny(t, pf, protocol.BuildPacket(protocol.CanDo, protocol.Opacify([]byte("reverse"))), protocol.PktPreSleep) {
 					return
 				}
 
-				if !packetReceivedIsAny(t, pf, BuildPacket(CAN_DO, Opacify([]byte("reverse"))), preSleep) {
+				if !packetReceivedIsAny(t, pf, protocol.BuildPacket(protocol.CanDo, protocol.Opacify([]byte("reverse"))), protocol.PktPreSleep) {
 					return
 				}
 
-				noop.WriteTo(c)
+				protocol.PktNoop.WriteTo(c)
 
-				if !packetReceivedIs(t, pf, grabJob) {
+				if !packetReceivedIs(t, pf, protocol.PktGrabJob) {
 					return
 				}
 
-				if !packetReceivedIs(t, pf, grabJobUniq) {
+				if !packetReceivedIs(t, pf, protocol.PktGrabJobUniq) {
 					return
 				}
 
-				noJob.WriteTo(c)
-				BuildPacket(JOB_ASSIGN, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test"))).WriteTo(c)
+				protocol.PktNoJob.WriteTo(c)
+				protocol.BuildPacket(protocol.JobAssign, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("reverse")), protocol.Opacify([]byte("test"))).WriteTo(c)
 
-				if !packetReceivedIs(t, pf, preSleep) {
+				if !packetReceivedIs(t, pf, protocol.PktPreSleep) {
 					return
 				}
 
-				if !packetReceivedIs(t, pf, BuildPacket(WORK_COMPLETE_WRK, Opacify([]byte("H:lap:1")), Opacify([]byte("tset")))) {
+				if !packetReceivedIs(t, pf, protocol.BuildPacket(protocol.WorkCompleteWorker, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("tset")))) {
 					return
 				}
 			}(conn)

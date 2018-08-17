@@ -4,20 +4,22 @@ import (
 	"bytes"
 	"context"
 	"io"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
 type (
 	// Task describe a requested task by a Client
 	Task interface {
-		Handle(p Packet)
+		Handle(p protocol.Packet)
 		Value() ([]byte, error)
 		Reader() (io.Reader, error)
-		Packet() Packet
+		Packet() protocol.Packet
 		Done() <-chan struct{}
 	}
 
 	task struct {
-		packet  Packet
+		packet  protocol.Packet
 		ctx     context.Context
 		cancel  context.CancelFunc
 		payload bytes.Buffer
@@ -29,7 +31,7 @@ type (
 	nullTask struct{}
 
 	echoTask struct {
-		packet  Packet
+		packet  protocol.Packet
 		ctx     context.Context
 		cancel  context.CancelFunc
 		payload bytes.Buffer
@@ -43,7 +45,7 @@ var NilTask Task = &nullTask{}
 // NewTask create a Task from a command string and a payload
 func NewTask(cmd string, payload []byte) Task {
 	r := &task{
-		packet: BuildPacket(SUBMIT_JOB, Opacify([]byte(cmd)), Opacify([]byte{}), Opacify(payload)),
+		packet: protocol.BuildPacket(protocol.SubmitJob, protocol.Opacify([]byte(cmd)), protocol.Opacify([]byte{}), protocol.Opacify(payload)),
 	}
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 
@@ -53,7 +55,7 @@ func NewTask(cmd string, payload []byte) Task {
 // NewTaskLow create a low priority Task from a command string and a payload
 func NewTaskLow(cmd string, payload []byte) Task {
 	r := &task{
-		packet: BuildPacket(SUBMIT_JOB_LOW, Opacify([]byte(cmd)), Opacify([]byte{}), Opacify(payload)),
+		packet: protocol.BuildPacket(protocol.SubmitJobLow, protocol.Opacify([]byte(cmd)), protocol.Opacify([]byte{}), protocol.Opacify(payload)),
 	}
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 
@@ -63,7 +65,7 @@ func NewTaskLow(cmd string, payload []byte) Task {
 // NewTaskHigh create a hig priority Task from a command string and a payload
 func NewTaskHigh(cmd string, payload []byte) Task {
 	r := &task{
-		packet: BuildPacket(SUBMIT_JOB_HIGH, Opacify([]byte(cmd)), Opacify([]byte{}), Opacify(payload)),
+		packet: protocol.BuildPacket(protocol.SubmitJobHigh, protocol.Opacify([]byte(cmd)), protocol.Opacify([]byte{}), protocol.Opacify(payload)),
 	}
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 
@@ -74,33 +76,32 @@ func (r *task) Done() <-chan struct{} {
 	return r.ctx.Done()
 }
 
-func (r *task) Packet() Packet {
+func (r *task) Packet() protocol.Packet {
 	return r.packet
 }
 
-func (r *task) Handle(p Packet) {
+func (r *task) Handle(p protocol.Packet) {
 	switch p.Cmd() {
-	case WORK_COMPLETE:
+	case protocol.WorkComplete:
 		r.payload.Write(p.At(1).Bytes())
 		r.cancel()
 
-	case WORK_FAIL:
+	case protocol.WorkFail:
 		r.err = ErrUnknown
 		r.cancel()
 
-	case WORK_EXCEPTION:
+	case protocol.WorkException:
 		r.err = &ExceptionError{p.At(1).Bytes()}
 		r.cancel()
 
-	case WORK_DATA:
+	case protocol.WorkData:
 		r.payload.Write(p.At(1).Bytes())
 
-	case WORK_STATUS:
+	case protocol.WorkStatus:
 		// TODO
 
-	case WORK_WARNING:
+	case protocol.WorkWarning:
 		// TODO
-
 	}
 }
 
@@ -116,7 +117,7 @@ func (r *task) Reader() (io.Reader, error) {
 	return bytes.NewReader(r.payload.Bytes()), r.err
 }
 
-func (nt *nullTask) Handle(_ Packet) {
+func (nt *nullTask) Handle(_ protocol.Packet) {
 }
 
 func (nt *nullTask) Value() ([]byte, error) {
@@ -129,8 +130,8 @@ func (nt *nullTask) Done() <-chan struct{} {
 	return ch
 }
 
-func (nt *nullTask) Packet() Packet {
-	return emptyEchoPacket
+func (nt *nullTask) Packet() protocol.Packet {
+	return protocol.PktEmptyEchoPacket
 }
 
 func (nt *nullTask) Reader() (io.Reader, error) {
@@ -140,7 +141,7 @@ func (nt *nullTask) Reader() (io.Reader, error) {
 // EchoTask returns a Task for an Echo Request
 func EchoTask(payload []byte) Task {
 	r := &echoTask{
-		packet: BuildPacket(ECHO_REQ, Opacify(payload)),
+		packet: protocol.BuildPacket(protocol.EchoReq, protocol.Opacify(payload)),
 	}
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 
@@ -151,9 +152,9 @@ func (r *echoTask) Done() <-chan struct{} {
 	return r.ctx.Done()
 }
 
-func (r *echoTask) Handle(p Packet) {
+func (r *echoTask) Handle(p protocol.Packet) {
 	switch p.Cmd() {
-	case ECHO_RES:
+	case protocol.EchoRes:
 		r.payload.Write(p.At(0).Bytes())
 		r.cancel()
 
@@ -169,7 +170,7 @@ func (r *echoTask) Value() ([]byte, error) {
 	return r.payload.Bytes(), r.err
 }
 
-func (r *echoTask) Packet() Packet {
+func (r *echoTask) Packet() protocol.Packet {
 	return r.packet
 }
 

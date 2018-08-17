@@ -3,6 +3,8 @@ package gearman // import "github.com/nathanaelle/gearman"
 import (
 	"context"
 	"testing"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
 func TestSingleClient_simple(t *testing.T) {
@@ -42,23 +44,23 @@ func TestSingleClient_unordered_result(t *testing.T) {
 	r2 := cli.Submit(NewTask("reverse", []byte("test 2")))
 	r3 := cli.Submit(NewTask("reverse", []byte("test 3")))
 
-	if !validStep(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 1")))) {
+	if !validStep(t, srv.Received(), protocol.BuildPacket(protocol.SubmitJob, protocol.Opacify([]byte("reverse")), protocol.Opacify([]byte("")), protocol.Opacify([]byte("test 1")))) {
 		return
 	}
-	if !validStep(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 2")))) {
+	if !validStep(t, srv.Received(), protocol.BuildPacket(protocol.SubmitJob, protocol.Opacify([]byte("reverse")), protocol.Opacify([]byte("")), protocol.Opacify([]byte("test 2")))) {
 		return
 	}
-	if !validStep(t, srv.Received(), BuildPacket(SUBMIT_JOB, Opacify([]byte("reverse")), Opacify([]byte("")), Opacify([]byte("test 3")))) {
+	if !validStep(t, srv.Received(), protocol.BuildPacket(protocol.SubmitJob, protocol.Opacify([]byte("reverse")), protocol.Opacify([]byte("")), protocol.Opacify([]byte("test 3")))) {
 		return
 	}
 
-	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:1"))))
-	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:2"))))
-	srv.Send(BuildPacket(JOB_CREATED, Opacify([]byte("H:lap:3"))))
+	srv.Send(protocol.BuildPacket(protocol.JobCreated, protocol.Opacify([]byte("H:lap:1"))))
+	srv.Send(protocol.BuildPacket(protocol.JobCreated, protocol.Opacify([]byte("H:lap:2"))))
+	srv.Send(protocol.BuildPacket(protocol.JobCreated, protocol.Opacify([]byte("H:lap:3"))))
 
-	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:2")), Opacify([]byte("2 tset"))))
-	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:3")), Opacify([]byte("3 tset"))))
-	srv.Send(BuildPacket(WORK_COMPLETE, Opacify([]byte("H:lap:1")), Opacify([]byte("1 tset"))))
+	srv.Send(protocol.BuildPacket(protocol.WorkComplete, protocol.Opacify([]byte("H:lap:2")), protocol.Opacify([]byte("2 tset"))))
+	srv.Send(protocol.BuildPacket(protocol.WorkComplete, protocol.Opacify([]byte("H:lap:3")), protocol.Opacify([]byte("3 tset"))))
+	srv.Send(protocol.BuildPacket(protocol.WorkComplete, protocol.Opacify([]byte("H:lap:1")), protocol.Opacify([]byte("1 tset"))))
 
 	if !validResult(t, []byte("3 tset"), nil)(r3.Value()) {
 		return

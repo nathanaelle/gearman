@@ -1,4 +1,4 @@
-package gearman // import "github.com/nathanaelle/gearman"
+package protocol // import "github.com/nathanaelle/gearman/protocol"
 
 import (
 	"io"

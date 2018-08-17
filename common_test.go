@@ -3,9 +3,18 @@ package gearman // import "github.com/nathanaelle/gearman"
 import (
 	"bytes"
 	"testing"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
-func validStep(t *testing.T, rcvd []byte, expected Packet) bool {
+// unmarshal bigendian encoded uint32 to uint32
+// deprecated
+func be2uint32(b []byte) uint32 {
+	return uint32(b[3]) | uint32(b[2])<<8 |
+		uint32(b[1])<<16 | uint32(b[0])<<24
+}
+
+func validStep(t *testing.T, rcvd []byte, expected protocol.Packet) bool {
 	if bytes.Equal(rcvd, expected.Marshal()) {
 		return true
 	}
@@ -41,7 +50,7 @@ func validErr(t *testing.T, err, expectedErr error) bool {
 	return true
 }
 
-func validAnyStep(t *testing.T, rcvd []byte, expecteds ...Packet) bool {
+func validAnyStep(t *testing.T, rcvd []byte, expecteds ...protocol.Packet) bool {
 	for _, expected := range expecteds {
 		if bytes.Equal(rcvd, expected.Marshal()) {
 			return true
@@ -58,7 +67,7 @@ func validResult(t *testing.T, expectedRes []byte, expectedErr error) func([]byt
 	}
 }
 
-func packetReceivedIs(t *testing.T, pf PacketFactory, expectedPkt Packet) bool {
+func packetReceivedIs(t *testing.T, pf protocol.PacketFactory, expectedPkt protocol.Packet) bool {
 	pkt, err := pf.Packet()
 	if err != nil {
 		t.Errorf("got error %+v", err)
@@ -68,7 +77,7 @@ func packetReceivedIs(t *testing.T, pf PacketFactory, expectedPkt Packet) bool {
 	return validStep(t, pkt.Marshal(), expectedPkt)
 }
 
-func packetReceivedIsAny(t *testing.T, pf PacketFactory, expectedPkts ...Packet) bool {
+func packetReceivedIsAny(t *testing.T, pf protocol.PacketFactory, expectedPkts ...protocol.Packet) bool {
 	pkt, err := pf.Packet()
 	if err != nil {
 		t.Errorf("got error %+v", err)

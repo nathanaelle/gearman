@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/nathanaelle/gearman/protocol"
 )
 
 type (
@@ -119,7 +121,7 @@ func (nc *testConn) Received() []byte {
 	return buff.Bytes()
 }
 
-func (nc *testConn) Send(b Packet) {
+func (nc *testConn) Send(b protocol.Packet) {
 	nc.mockup.Write(b.Marshal())
 }
 
