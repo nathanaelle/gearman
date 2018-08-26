@@ -7,12 +7,13 @@ import (
 	"io"
 	"log"
 
-	"github.com/nathanaelle/gearman/protocol"
+	"github.com/nathanaelle/gearman/v2/protocol"
 )
 
 type (
+	// Worker define the exposed interface of gearman worker
 	Worker interface {
-		AddServers(...Conn) Worker
+		AddServers(...Conn)
 		AddHandler(string, Job) Worker
 		DelHandler(string) Worker
 		DelAllHandlers() Worker
@@ -23,8 +24,8 @@ type (
 
 	worker struct {
 		pool
-		handlers map[string]Job
-		m_queue  <-chan Message
+		handlers  map[string]Job
+		wMsgQueue <-chan Message
 	}
 
 	workWriter func([]byte) (int, error)
@@ -38,7 +39,7 @@ func (f workWriter) Write(p []byte) (int, error) {
 func NewWorker(ctx context.Context, debug *log.Logger) Worker {
 	q := make(chan Message, 100)
 	w := new(worker)
-	w.m_queue = q
+	w.wMsgQueue = q
 	w.handlers = make(map[string]Job)
 	w.pool.newPool(ctx, q)
 
@@ -48,11 +49,10 @@ func NewWorker(ctx context.Context, debug *log.Logger) Worker {
 }
 
 // AddServers add a pool of servers to a Worker
-func (w *worker) AddServers(servers ...Conn) Worker {
+func (w *worker) AddServers(servers ...Conn) {
 	for _, server := range servers {
 		w.addServer(server)
 	}
-	return w
 }
 
 //	Add a Job to a generic Worker
@@ -91,7 +91,7 @@ func (w *worker) Close() error {
 }
 
 func (w *worker) Receivers() (<-chan Message, context.Context) {
-	return w.m_queue, w.ctx
+	return w.wMsgQueue, w.ctx
 }
 
 func (w *worker) GetHandler(name string) Job {

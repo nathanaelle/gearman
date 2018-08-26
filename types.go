@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 
-	"github.com/nathanaelle/gearman/protocol"
+	"github.com/nathanaelle/gearman/v2/protocol"
 )
 
 type (

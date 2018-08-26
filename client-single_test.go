@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nathanaelle/gearman/protocol"
+	"github.com/nathanaelle/gearman/v2/protocol"
 )
 
 func TestSingleClient_simple(t *testing.T) {

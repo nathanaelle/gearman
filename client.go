@@ -4,13 +4,13 @@ import (
 	"context"
 	"log"
 
-	"github.com/nathanaelle/gearman/protocol"
+	"github.com/nathanaelle/gearman/v2/protocol"
 )
 
 type (
 	// Client define the exposed interface of a gearman Client
 	Client interface {
-		AddServers(...Conn) Client
+		AddServers(...Conn)
 		Submit(Task) Task
 		Close() error
 

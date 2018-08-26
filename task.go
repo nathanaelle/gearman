@@ -5,7 +5,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/nathanaelle/gearman/protocol"
+	"github.com/nathanaelle/gearman/v2/protocol"
 )
 
 type (
@@ -87,7 +87,7 @@ func (r *task) Handle(p protocol.Packet) {
 		r.cancel()
 
 	case protocol.WorkFail:
-		r.err = ErrUnknown
+		r.err = ErrWorkFail
 		r.cancel()
 
 	case protocol.WorkException:
@@ -159,7 +159,7 @@ func (r *echoTask) Handle(p protocol.Packet) {
 		r.cancel()
 
 	default:
-		r.err = ErrUnknown
+		r.err = &IncoherentError{protocol.EchoRes, p.Cmd()}
 		r.cancel()
 	}
 }

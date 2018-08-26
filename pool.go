@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nathanaelle/gearman/protocol"
+	"github.com/nathanaelle/gearman/v2/protocol"
 )
 
 type (

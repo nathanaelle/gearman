@@ -39,9 +39,9 @@ func (c *singleServer) Close() error {
 }
 
 //	Add a list of gearman server
-func (c *singleServer) AddServers(servers ...Conn) Client {
+func (c *singleServer) AddServers(servers ...Conn) {
 	if c.configured || len(servers) == 0 {
-		return c
+		return
 	}
 
 	if len(servers) > 1 {
@@ -53,7 +53,7 @@ func (c *singleServer) AddServers(servers ...Conn) Client {
 	for _, server := range servers {
 		c.addServer(server)
 	}
-	return c
+	return
 }
 
 func (c *singleServer) Submit(req Task) Task {

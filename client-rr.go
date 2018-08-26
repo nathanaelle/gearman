@@ -42,7 +42,7 @@ func (c *rrServer) Close() error {
 }
 
 //	Add a list of gearman server
-func (c *rrServer) AddServers(servers ...Conn) Client {
+func (c *rrServer) AddServers(servers ...Conn) {
 	c.climutex.Lock()
 	defer c.climutex.Unlock()
 
@@ -52,7 +52,6 @@ func (c *rrServer) AddServers(servers ...Conn) Client {
 		c.pool = append(c.pool, ssc)
 
 	}
-	return c
 }
 
 func (c *rrServer) Submit(req Task) Task {

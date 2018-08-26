@@ -6,7 +6,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/nathanaelle/gearman/protocol"
+	"github.com/nathanaelle/gearman/v2/protocol"
 )
 
 func trivialWorker(end context.Context, t *testing.T, srv ...Conn) {
