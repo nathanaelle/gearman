@@ -22,7 +22,7 @@ type (
 
 var (
 	// ErrWorkFail is returned when a worker returns a Fail Packet
-	ErrWorkFail error = errors.New("Work Failed")
+	ErrWorkFail = errors.New("Work Failed")
 )
 
 func (e *ExceptionError) Error() string {

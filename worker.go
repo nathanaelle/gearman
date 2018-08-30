@@ -138,7 +138,7 @@ func workComplete(reply chan<- protocol.Packet, tid TaskID) io.Writer {
 	})
 }
 
-func run(job Job, input io.Reader, reply chan<- protocol.Packet, tid TaskID) {
+func runWorker(job Job, input io.Reader, reply chan<- protocol.Packet, tid TaskID) {
 	res := new(bytes.Buffer)
 	status, err := isolatedServe(job, input, res, workData(reply, tid))
 
@@ -181,14 +181,14 @@ func workerLoop(w Worker, dbg *log.Logger) {
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					panic(err)
 				}
-				go run(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
+				go runWorker(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
 
 			case protocol.JobAssignUniq:
 				msg.Server.CounterAdd(-1)
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
 					panic(err)
 				}
-				go run(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
+				go runWorker(w.GetHandler(string(msg.Pkt.At(1).Bytes())), bytes.NewReader(msg.Pkt.At(2).Bytes()), msg.Reply, tid)
 
 			case protocol.Error:
 				debug(dbg, "WRKR\tERR\t[%s] [%s]\n", msg.Pkt.At(0).Bytes(), string(msg.Pkt.At(1).Bytes()))
