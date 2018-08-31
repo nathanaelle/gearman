@@ -14,10 +14,10 @@ type (
 		Submit(Task) Task
 		Close() error
 
-		assignTask(tid TaskID)
-		getTask(TaskID) Task
-		extractTask(TaskID) Task
-		receivers() (<-chan Message, context.Context)
+		AssignTask(TaskID)
+		GetTask(TaskID) Task
+		ExtractTask(TaskID) Task
+		Receivers() (<-chan Message, context.Context)
 	}
 )
 
@@ -25,7 +25,7 @@ func clientLoop(c Client, dbg *log.Logger) {
 	var tid TaskID
 	var err error
 
-	mQueue, ctx := c.receivers()
+	mQueue, ctx := c.Receivers()
 
 	for {
 		select {
@@ -53,7 +53,7 @@ func clientLoop(c Client, dbg *log.Logger) {
 					debug(dbg, "CLI\tprotocol.JobCreated TID [%s] err : %v\n", string(msg.Pkt.At(0).Bytes()), err)
 					panic(err)
 				}
-				c.assignTask(tid)
+				c.AssignTask(tid)
 
 			case protocol.WorkData, protocol.WorkWarning, protocol.WorkStatus:
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
@@ -61,7 +61,7 @@ func clientLoop(c Client, dbg *log.Logger) {
 					panic(err)
 				}
 
-				c.getTask(tid).Handle(msg.Pkt)
+				c.GetTask(tid).Handle(msg.Pkt)
 
 			case protocol.WorkComplete, protocol.WorkFail, protocol.WorkException:
 				if err = tid.Cast(msg.Pkt.At(0)); err != nil {
@@ -69,7 +69,7 @@ func clientLoop(c Client, dbg *log.Logger) {
 					panic(err)
 				}
 
-				c.extractTask(tid).Handle(msg.Pkt)
+				c.ExtractTask(tid).Handle(msg.Pkt)
 
 			case protocol.StatusRes:
 				panic("status_res not wrote")

@@ -14,6 +14,7 @@ type (
 		mQueue     chan Message
 		reqQueue   []Task
 		climutex   *sync.Mutex
+		reply      PacketEmiter
 	}
 )
 
@@ -30,7 +31,7 @@ func SingleServerClient(ctx context.Context, debug *log.Logger) Client {
 	return c
 }
 
-func (c *singleServer) receivers() (<-chan Message, context.Context) {
+func (c *singleServer) Receivers() (<-chan Message, context.Context) {
 	return c.mQueue, c.ctx
 }
 
@@ -50,9 +51,9 @@ func (c *singleServer) AddServers(servers ...Conn) {
 
 	c.configured = true
 
-	for _, server := range servers {
-		c.addServer(server)
-	}
+	reply, _ := c.addServer(servers[0])
+	c.reply = reply
+
 	return
 }
 
@@ -62,14 +63,12 @@ func (c *singleServer) Submit(req Task) Task {
 
 	c.reqQueue = append(c.reqQueue, req)
 
-	for _, s := range c.listServers() {
-		c.sendTo(s, req.Packet())
-	}
+	c.reply.Send(req.Packet())
 
 	return req
 }
 
-func (c *singleServer) assignTask(tid TaskID) {
+func (c *singleServer) AssignTask(tid TaskID) {
 	c.climutex.Lock()
 	defer c.climutex.Unlock()
 
@@ -77,7 +76,7 @@ func (c *singleServer) assignTask(tid TaskID) {
 	c.reqQueue = c.reqQueue[1:]
 }
 
-func (c *singleServer) getTask(tid TaskID) Task {
+func (c *singleServer) GetTask(tid TaskID) Task {
 	c.climutex.Lock()
 	defer c.climutex.Unlock()
 
@@ -87,7 +86,7 @@ func (c *singleServer) getTask(tid TaskID) Task {
 	return NilTask
 }
 
-func (c *singleServer) extractTask(tid TaskID) Task {
+func (c *singleServer) ExtractTask(tid TaskID) Task {
 	c.climutex.Lock()
 	defer c.climutex.Unlock()
 

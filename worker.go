@@ -124,33 +124,33 @@ func isolatedServe(job Job, req io.Reader, res, data io.Writer) (status bool, er
 	return
 }
 
-func workData(reply chan<- protocol.Packet, tid TaskID) io.Writer {
+func workData(reply PacketEmiter, tid TaskID) io.Writer {
 	return workWriter(func(p []byte) (n int, err error) {
-		reply <- protocol.BuildPacket(protocol.WorkDataWorker, tid, protocol.Opacify(p))
+		reply.Send(protocol.BuildPacket(protocol.WorkDataWorker, tid, protocol.Opacify(p)))
 		return len(p), nil
 	})
 }
 
-func workComplete(reply chan<- protocol.Packet, tid TaskID) io.Writer {
+func workComplete(reply PacketEmiter, tid TaskID) io.Writer {
 	return workWriter(func(p []byte) (n int, err error) {
-		reply <- protocol.BuildPacket(protocol.WorkCompleteWorker, tid, protocol.Opacify(p))
+		reply.Send(protocol.BuildPacket(protocol.WorkCompleteWorker, tid, protocol.Opacify(p)))
 		return len(p), nil
 	})
 }
 
-func runWorker(job Job, input io.Reader, reply chan<- protocol.Packet, tid TaskID) {
+func runWorker(job Job, input io.Reader, reply PacketEmiter, tid TaskID) {
 	res := new(bytes.Buffer)
 	status, err := isolatedServe(job, input, res, workData(reply, tid))
 
 	switch {
 	case err == nil && status:
-		reply <- protocol.BuildPacket(protocol.WorkCompleteWorker, tid, protocol.Opacify(res.Bytes()))
+		reply.Send(protocol.BuildPacket(protocol.WorkCompleteWorker, tid, protocol.Opacify(res.Bytes())))
 
 	case err == nil && !status:
-		reply <- protocol.BuildPacket(protocol.WorkFailWorker, tid)
+		reply.Send(protocol.BuildPacket(protocol.WorkFailWorker, tid))
 
 	case err != nil:
-		reply <- protocol.BuildPacket(protocol.WorkExceptionWorker, tid, protocol.Opacify([]byte(err.Error())))
+		reply.Send(protocol.BuildPacket(protocol.WorkExceptionWorker, tid, protocol.Opacify([]byte(err.Error()))))
 	}
 }
 
@@ -169,8 +169,7 @@ func workerLoop(w Worker, dbg *log.Logger) {
 
 			case protocol.Noop:
 				msg.Server.CounterAdd(2)
-				msg.Reply <- protocol.PktGrabJob
-				msg.Reply <- protocol.PktGrabJobUniq
+				msg.Reply.Send(protocol.PktGrabJob, protocol.PktGrabJobUniq)
 				continue
 
 			case protocol.EchoRes:
@@ -198,7 +197,7 @@ func workerLoop(w Worker, dbg *log.Logger) {
 			}
 
 			if msg.Server.IsZeroCounter() {
-				msg.Reply <- protocol.PktPreSleep
+				msg.Reply.Send(protocol.PktPreSleep)
 			}
 
 		case <-end.Done():

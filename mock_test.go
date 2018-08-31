@@ -2,6 +2,7 @@ package gearman
 
 import (
 	"context"
+	"errors"
 	"io"
 	"sync"
 	"testing"
@@ -31,6 +32,13 @@ func mockServerClient(cancel context.CancelFunc, wg *sync.WaitGroup, cli Client,
 	if !validResult(t, []byte("tset"), nil)(r.Value()) {
 		return
 	}
+
+	r = cli.Submit(NewTask("esrever", []byte("test")))
+
+	if !validResult(t, nil, errors.New(`Error ["job doesn't exist"]`))(r.Value()) {
+		return
+	}
+
 }
 
 func mockServerWorker(ctx context.Context, wg *sync.WaitGroup, wkr Worker, t *testing.T) {

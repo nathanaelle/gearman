@@ -14,6 +14,7 @@ type (
 	TaskID    []byte
 	TaskMapID [64]byte
 
+	// Function is used as the Function Name of a gearman Task
 	Function []byte
 
 	// ClientID is used as the ID of a client in a gearman Task
@@ -76,6 +77,7 @@ func (fn Function) String() string {
 	return base64.RawURLEncoding.EncodeToString([]byte(fn))
 }
 
+// IsEqual compare two Function and return true if they have the same name
 func (fn Function) IsEqual(f2 Function) bool {
 	return bytes.Equal(fn, f2)
 }

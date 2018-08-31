@@ -1,4 +1,4 @@
-package gearman
+package gearman // import "github.com/nathanaelle/gearman"
 
 import (
 	"bytes"
@@ -28,10 +28,12 @@ func NewMockServer() *MockServer {
 	}
 }
 
+// AddServers implements Client.AddServers and Worker.AddServers
 func (mc *MockServer) AddServers(...Conn) {
 
 }
 
+// AddHandler implements Worker.AddHandler
 func (mc *MockServer) AddHandler(name string, job Job) Worker {
 	mc.lock.Lock()
 	defer mc.lock.Unlock()
@@ -41,6 +43,7 @@ func (mc *MockServer) AddHandler(name string, job Job) Worker {
 	return mc
 }
 
+// DelHandler implements Worker.DelHandler
 func (mc *MockServer) DelHandler(name string) Worker {
 	mc.lock.Lock()
 	defer mc.lock.Unlock()
@@ -50,6 +53,7 @@ func (mc *MockServer) DelHandler(name string) Worker {
 	return mc
 }
 
+// DelAllHandlers implements Worker.DelAllHandlers
 func (mc *MockServer) DelAllHandlers() Worker {
 	mc.lock.Lock()
 	defer mc.lock.Unlock()
@@ -59,6 +63,7 @@ func (mc *MockServer) DelAllHandlers() Worker {
 	return mc
 }
 
+// GetHandler implements Worker.GetHandler
 func (mc *MockServer) GetHandler(name string) Job {
 	mc.lock.Lock()
 	defer mc.lock.Unlock()
@@ -70,37 +75,25 @@ func (mc *MockServer) GetHandler(name string) Job {
 	return FailJob
 }
 
+// Receivers implements Client.Receivers and Worker.Receivers
 func (mc *MockServer) Receivers() (<-chan Message, context.Context) {
 	return nil, nil
 }
 
+// Close implements Client.Close and Worker.Close
 func (mc *MockServer) Close() error {
 	return nil
 }
 
+// Submit implements Client.Submit
 func (mc *MockServer) Submit(req Task) Task {
 	pkt := req.Packet()
 
 	switch pkt.Cmd() {
 	case protocol.SubmitJob:
-		reply := make(chan protocol.Packet, 5)
+		reply := mockPacketEmiter(req)
 
 		go runWorker(mc.GetHandler(string(pkt.At(0).Bytes())), bytes.NewReader(pkt.At(2).Bytes()), reply, TaskID{})
-
-		go func() {
-			for res := range reply {
-				switch res.Cmd() {
-				case protocol.WorkCompleteWorker:
-					taskRes, _ := protocol.WorkComplete.Borrow(res)
-					go req.Handle(taskRes)
-					close(reply)
-					break
-
-				default:
-					log.Fatalf("res unknown: %v %q", res.Cmd(), res.Payload())
-				}
-			}
-		}()
 
 	default:
 		log.Fatalf("unknown: %v %q", pkt.Cmd(), pkt.Payload())
@@ -109,18 +102,49 @@ func (mc *MockServer) Submit(req Task) Task {
 	return req
 }
 
-func (mc *MockServer) assignTask(tid TaskID) {
+// AssignTask implements Client.AssignTask
+func (mc *MockServer) AssignTask(tid TaskID) {
 
 }
 
-func (mc *MockServer) getTask(TaskID) Task {
+// GetTask implements Client.GetTask
+func (mc *MockServer) GetTask(TaskID) Task {
 	return nil
 }
 
-func (mc *MockServer) extractTask(TaskID) Task {
+// ExtractTask implements Client.ExtractTask
+func (mc *MockServer) ExtractTask(TaskID) Task {
 	return nil
 }
 
-func (mc *MockServer) receivers() (<-chan Message, context.Context) {
-	return nil, nil
+func mockPacketEmiter(req Task) PacketEmiter {
+	lock := sync.Mutex{}
+
+	return newFuncPacketEmiter(func(res protocol.Packet, fpe PacketEmiter) {
+		lock.Lock()
+		defer lock.Unlock()
+
+		switch res.Cmd() {
+		case protocol.WorkCompleteWorker:
+			taskRes, _ := protocol.WorkComplete.Borrow(res)
+			go req.Handle(taskRes)
+			return
+
+		case protocol.WorkFailWorker:
+			taskRes, _ := protocol.WorkFail.Borrow(res)
+			go req.Handle(taskRes)
+			return
+
+		case protocol.WorkExceptionWorker:
+			taskRes, _ := protocol.WorkException.Borrow(res)
+			go req.Handle(taskRes)
+			return
+
+		case protocol.WorkDataWorker:
+			taskRes, _ := protocol.WorkData.Borrow(res)
+			go req.Handle(taskRes)
+			return
+		}
+		log.Fatalf("res unknown: %v %q", res.Cmd(), res.Payload())
+	})
 }

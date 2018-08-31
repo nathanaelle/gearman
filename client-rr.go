@@ -27,7 +27,7 @@ func RoundRobinClient(ctx context.Context, debug *log.Logger) Client {
 	return c
 }
 
-func (c *rrServer) receivers() (<-chan Message, context.Context) {
+func (c *rrServer) Receivers() (<-chan Message, context.Context) {
 	return nil, nil
 }
 
@@ -64,13 +64,13 @@ func (c *rrServer) Submit(req Task) Task {
 	return cli.Submit(req)
 }
 
-func (c *rrServer) assignTask(tid TaskID) {
+func (c *rrServer) AssignTask(tid TaskID) {
 }
 
-func (c *rrServer) getTask(tid TaskID) Task {
+func (c *rrServer) GetTask(tid TaskID) Task {
 	return nil
 }
 
-func (c *rrServer) extractTask(tid TaskID) Task {
+func (c *rrServer) ExtractTask(tid TaskID) Task {
 	return nil
 }

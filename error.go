@@ -26,7 +26,7 @@ var (
 )
 
 func (e *ExceptionError) Error() string {
-	return fmt.Sprintf("Error [%x]", e.Payload)
+	return fmt.Sprintf("Error [%q]", e.Payload)
 }
 
 func (e *IncoherentError) Error() string {
