@@ -1,4 +1,4 @@
-package gearman
+package gearman // import "github.com/nathanaelle/gearman/v2"
 
 import (
 	"context"

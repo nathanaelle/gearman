@@ -1,4 +1,4 @@
-package protocol // import "github.com/nathanaelle/gearman/protocol"
+package protocol // import "github.com/nathanaelle/gearman/v2/protocol"
 
 import (
 	//	"crypto/rand"

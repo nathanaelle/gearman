@@ -1,4 +1,4 @@
-package protocol // import "github.com/nathanaelle/gearman/protocol"
+package protocol // import "github.com/nathanaelle/gearman/v2/protocol"
 
 import (
 	"fmt"
@@ -51,14 +51,22 @@ type (
 )
 
 var (
+	// PktInternalEchoPacket Preencoded Packet
 	PktInternalEchoPacket Packet = &pkt1len{EchoRes, 13, []byte{'i', 'n', 't', 'e', 'r', 'n', 'a', 'l', ' ', 'e', 'c', 'h', 'o'}}
-	PktEmptyEchoPacket    Packet = &pkt1len{EchoReq, 0, []byte{}}
-	PktResetAbilities     Packet = &pkt0size{ResetAbilities}
-	PktNoop               Packet = &pkt0size{Noop}
-	PktNoJob              Packet = &pkt0size{NoJob}
-	PktGrabJob            Packet = &pkt0size{GrabJob}
-	PktGrabJobUniq        Packet = &pkt0size{GrabJobUniq}
-	PktPreSleep           Packet = &pkt0size{PreSleep}
+	// PktEmptyEchoPacket Preencoded Packet
+	PktEmptyEchoPacket Packet = &pkt1len{EchoReq, 0, []byte{}}
+	// PktResetAbilities Preencoded Packet
+	PktResetAbilities Packet = &pkt0size{ResetAbilities}
+	// PktNoop Preencoded Packet
+	PktNoop Packet = &pkt0size{Noop}
+	// PktNoJob Preencoded Packet
+	PktNoJob Packet = &pkt0size{NoJob}
+	// PktGrabJob Preencoded Packet
+	PktGrabJob Packet = &pkt0size{GrabJob}
+	// PktGrabJobUniq Preencoded Packet
+	PktGrabJobUniq Packet = &pkt0size{GrabJobUniq}
+	// PktPreSleep Preencoded Packet
+	PktPreSleep Packet = &pkt0size{PreSleep}
 )
 
 func newPkt0size(cmd Command, size int) (Packet, error) {

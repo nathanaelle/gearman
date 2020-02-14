@@ -1,4 +1,4 @@
-package protocol // import "github.com/nathanaelle/gearman/protocol"
+package protocol // import "github.com/nathanaelle/gearman/v2/protocol"
 
 import (
 	"bytes"
@@ -105,47 +105,82 @@ func Test_Packet(t *testing.T) {
 
 //	Unmarshal
 func BenchmarkUnmarshalPkt0size(b *testing.B) {
+	var err error
+
 	r := []byte{}
 	for n := 0; n < b.N; n++ {
-		ResetAbilities.Unmarshal(r)
+		_, err = ResetAbilities.Unmarshal(r)
+	}
+
+	if err != nil {
+		panic(err)
 	}
 }
 
 func BenchmarkUnmarshalPkt1len(b *testing.B) {
+	var err error
+
 	r := []byte{'i', 'n', 't', 'e', 'r', 'n', 'a', 'l', ' ', 'e', 'c', 'h', 'o'}
 	for n := 0; n < b.N; n++ {
-		EchoReq.Unmarshal(r)
+		_, err = EchoReq.Unmarshal(r)
+	}
+
+	if err != nil {
+		panic(err)
 	}
 }
 
 func BenchmarkUnmarshalPktcommon(b *testing.B) {
+	var err error
+
 	r := []byte{0x48, 0x3a, 0x6c, 0x61, 0x70, 0x3a, 0x31, 0, 0x72, 0x65, 0x76, 0x65, 0x72, 0x73, 0x65, 0, 0x74, 0x65, 0x73, 0x74}
 	for n := 0; n < b.N; n++ {
-		JobAssign.Unmarshal(r)
+		_, err = JobAssign.Unmarshal(r)
+	}
+
+	if err != nil {
+		panic(err)
 	}
 }
 
 func BenchmarkMarshalPkt0size(b *testing.B) {
+	var err error
 	var buff [12]byte
+
 	for n := 0; n < b.N; n++ {
-		PktResetAbilities.Encode(buff[:])
+		_, err = PktResetAbilities.Encode(buff[:])
+	}
+
+	if err != nil {
+		panic(err)
 	}
 }
 
 func BenchmarkMarshalPkt1len(b *testing.B) {
+	var err error
 	var buff [25]byte
 
 	pkt := PktInternalEchoPacket
 	for n := 0; n < b.N; n++ {
-		pkt.Encode(buff[:])
+		_, err = pkt.Encode(buff[:])
+	}
+
+	if err != nil {
+		panic(err)
 	}
 }
 
 func BenchmarkMarshalPktcommon(b *testing.B) {
-	pkt := BuildPacket(JobAssign, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test")))
+	var err error
 	var buff [32]byte
 
+	pkt := BuildPacket(JobAssign, Opacify([]byte("H:lap:1")), Opacify([]byte("reverse")), Opacify([]byte("test")))
+
 	for n := 0; n < b.N; n++ {
-		pkt.Encode(buff[:])
+		_, err = pkt.Encode(buff[:])
+	}
+
+	if err != nil {
+		panic(err)
 	}
 }
