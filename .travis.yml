@@ -1,7 +1,10 @@
 language: go
 go:
 - "tip"
-- "1.11"
+- 1.13
 branches:
   except:
   - /poc-.*/
+env:
+  - GO111MODULE=on
+      
